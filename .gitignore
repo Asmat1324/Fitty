@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# npm debug files
+npm-debug.log*
+
+# Yarn logs
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+/dist/
+/build/
+
+# Expo files
+.expo/
+.expo-shared/
+
+# OS files (macOS, Linux, etc.)
+.DS_Store
+Thumbs.db
+
+# IDE files (VSCode, etc.)
+.vscode/
+
+# .env files (to avoid committing sensitive environment variables)
+.env
