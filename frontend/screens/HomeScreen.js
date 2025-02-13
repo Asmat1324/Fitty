@@ -6,10 +6,6 @@ import HomeCard from '../components/HomeCard';
 const HomeScreen = () => {
   return (
     <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Content title="Fitty" subtitle="Your fitness tracker" />
-      </Appbar.Header>
-
       <View style={styles.content}>
         <HomeCard />
         <Button mode="contained" style={styles.button} onPress={() => console.log('Track Workouts')}>
@@ -25,10 +21,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 2,
   },
   button: {
-    marginTop: 20,
+    marginTop: 2,
   },
 });
 
