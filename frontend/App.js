@@ -1,11 +1,14 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PaperProvider } from "react-native-paper";
 import HomeScreen from './screens/HomeScreen';
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <HomeScreen />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <PaperProvider>
+        <HomeScreen />
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
