@@ -1,0 +1,31 @@
+{
+  "name": "fitty",
+  "version": "1.0.0",
+  "description": "A fitness-social media app",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "dependencies": {
+    "@babel/plugin-transform-class-properties": "^7.25.9",
+    "@babel/plugin-transform-nullish-coalescing-operator": "^7.26.6",
+    "@babel/plugin-transform-optional-chaining": "^7.25.9",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^10.0.0",
+    "expo": "^52.0.33",
+    "express": "^4.17.1",
+    "glob": "^11.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^6.13.0",
+    "react-native-dotenv": "^3.4.11",
+    "rimraf": "^6.0.1",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "latest",
+    "nodemon": "^2.0.15"
+  },
+  "author": "Fitty",
+  "license": "ISC"
+}
