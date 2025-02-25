@@ -17,6 +17,7 @@
     "chai": "^5.2.0",
     "dotenv": "^10.0.0",
     "expo": "^52.0.33",
+    "expo": "^52.0.37",
     "express": "^4.17.1",
     "glob": "^11.0.1",
     "jsonwebtoken": "^9.0.2",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@react-native-community/cli": "latest",
+    "babel-plugin-inline-dotenv": "^1.7.0",
     "nodemon": "^2.0.15"
   },
   "author": "Fitty",
