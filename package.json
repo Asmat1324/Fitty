@@ -3,15 +3,18 @@
   "version": "1.0.0",
   "description": "A fitness-social media app",
   "main": "backend/server.js",
+  "type": "module",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "dev": "nodemon backend/server.js",
+    "test": "mocha 'backend/test/**/*.test.js' --timeout 10000"
   },
   "dependencies": {
     "@babel/plugin-transform-class-properties": "^7.25.9",
     "@babel/plugin-transform-nullish-coalescing-operator": "^7.26.6",
     "@babel/plugin-transform-optional-chaining": "^7.25.9",
     "bcryptjs": "^2.4.3",
+    "chai": "^5.2.0",
     "dotenv": "^10.0.0",
     "expo": "^52.0.33",
     "express": "^4.17.1",
@@ -20,6 +23,7 @@
     "mongoose": "^6.13.0",
     "react-native-dotenv": "^3.4.11",
     "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
