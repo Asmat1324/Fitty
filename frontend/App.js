@@ -1,11 +1,14 @@
-import * as React from 'react';
-import MainContainer from './MainContainer';
+import React from 'react';
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
-import HomeScreen from './screens/HomeScreen';
+import MainContainer from './MainContainer';
 
 export default function App() {
   return (
-    <MainContainer/>
+    <SafeAreaProvider>
+      <PaperProvider>
+        <MainContainer />
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
