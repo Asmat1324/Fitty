@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Appbar, Button } from 'react-native-paper';
 import { List } from 'react-native-paper';
-
+//hi 
 
 const SettingsScreen = ({navigation}) => {
   const [darkMode, setDarkMode] = useState(false);
