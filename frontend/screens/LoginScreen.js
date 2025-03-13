@@ -9,6 +9,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const handleLogin = () => {
     if (!email || !password) {
       setErrorMessage('Invalid email or password.');
+      setIsAuthenticated(true); // TODO: fix the login system currently just bypassing it
     } else {
       setErrorMessage('');
       setIsAuthenticated(true);
