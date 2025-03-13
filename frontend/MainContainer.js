@@ -12,12 +12,14 @@ import HomeScreen from './screens/HomeScreen';
 import TrackerScreen from './screens/TrackerScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
-
+import WorkoutScreen from './screens/WorkoutScreen';
+import NotificationScreen from './screens/NotificationScreen'
 // Screen Names
 const homeName = 'Home';
 const trackerName = 'Tracker';
+const notificationName = 'Notifications';
 const settingsName = 'Settings';
-
+const workoutName = 'Workouts';
 // Create Navigators
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -34,7 +36,11 @@ const MainTabs = () => (
         if (rn === homeName) {
           iconName = focused ? 'home' : 'home-outline';
         } else if (rn === trackerName) {
-          iconName = focused ? 'list' : 'list-outline';
+          iconName = focused ? 'leaf' : 'leaf-outline';
+        } else if (rn === workoutName) {
+          iconName = focused ? 'barbell' : 'barbell-outline';
+        } else if (rn === notificationName) {
+          iconName = focused ? 'notifications' : 'notifications-outline';
         } else if (rn === settingsName) {
           iconName = focused ? 'settings' : 'settings-outline';
         }
@@ -44,7 +50,9 @@ const MainTabs = () => (
     })}
   >
     <Tab.Screen name={homeName} component={HomeScreen} />
+    <Tab.Screen name={workoutName} component={WorkoutScreen} />
     <Tab.Screen name={trackerName} component={TrackerScreen} />
+    <Tab.Screen name={notificationName} component={NotificationScreen} />
     <Tab.Screen name={settingsName} component={SettingsScreen} />
   </Tab.Navigator>
 );
