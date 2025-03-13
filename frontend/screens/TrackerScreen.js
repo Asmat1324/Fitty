@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Appbar } from "react-native-paper";
 
-const DetailsScreen = ({ navigation }) => {
+const TrackerScreen = ({ navigation }) => {
   const [food, setFood] = useState("");
   const [nutritionData, setNutritionData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -147,4 +147,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DetailsScreen;
+export default TrackerScreen;

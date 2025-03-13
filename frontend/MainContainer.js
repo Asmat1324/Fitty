@@ -9,13 +9,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Screens
 import HomeScreen from './screens/HomeScreen';
-import DetailsScreen from './screens/DetailsScreen';
+import TrackerScreen from './screens/TrackerScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 
 // Screen Names
 const homeName = 'Home';
-const detailsName = 'Details';
+const trackerName = 'Tracker';
 const settingsName = 'Settings';
 
 // Create Navigators
@@ -33,7 +33,7 @@ const MainTabs = () => (
 
         if (rn === homeName) {
           iconName = focused ? 'home' : 'home-outline';
-        } else if (rn === detailsName) {
+        } else if (rn === trackerName) {
           iconName = focused ? 'list' : 'list-outline';
         } else if (rn === settingsName) {
           iconName = focused ? 'settings' : 'settings-outline';
@@ -44,7 +44,7 @@ const MainTabs = () => (
     })}
   >
     <Tab.Screen name={homeName} component={HomeScreen} />
-    <Tab.Screen name={detailsName} component={DetailsScreen} />
+    <Tab.Screen name={trackerName} component={TrackerScreen} />
     <Tab.Screen name={settingsName} component={SettingsScreen} />
   </Tab.Navigator>
 );

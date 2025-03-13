@@ -15,13 +15,13 @@ const SettingsScreen = ({navigation}) => {
       title="Account"
       description="Manage account settings"
       left={() => <List.Icon icon="account" />}
-      onPress={() => navigation.navigate('detailsScreen')}
+      onPress={() => navigation.navigate('trackerScreen')}
       />
       <List.Item
           title="Notifications"
           description="Enable/disable notifications"
           left={() => <List.Icon icon="bell" />}
-          onPress={() => navigation.navigate('detailsScreen')}
+          onPress={() => navigation.navigate('trackerScreen')}
         />
         <List.Item
           title="Privacy"
