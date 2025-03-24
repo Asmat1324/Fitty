@@ -1,22 +1,25 @@
+import { Link } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+//import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function LoginScreen({ navigation, setIsAuthenticated }) {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+export default function SignupScreen({ navigation, setIsAuthenticated }) {
+  const [formData, setFormData] = useState({
+     username: "",
+     email: "",
+     password: "" });
  // const [email, setEmail] = useState('');
  // const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
       e.preventDefault();
       setErrorMessage("");
 
    try{
-    const response = await fetch("http://192.168.1.70:19000/api/auth/login", {
+    const response = await fetch("http://192.168.1.70:19000/api/auth/register", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(formData),
@@ -24,8 +27,8 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
 
     if(response.ok){
       const data = await response.json();
-      await AsyncStorage.setItem('token', data.token);
-      setIsAuthenticated(true);
+      //await AsyncStorage.setItem('token', data.token);
+      navigation.navigate('Login')
     }
     else {
       const { errorMessage } = await response.json();
@@ -40,16 +43,26 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
+      <Text style={styles.title}>But first... <Text style={styles.highlight}>Create an account!</Text></Text>
       <View style={styles.card}>
+      <TextInput
+          style={styles.input}
+          placeholder="Username"
+          name="username"
+          placeholderTextColor="#CCC"
+          value={formData.username}
+          onChangeText={(text) => handleInputChange('username', text)}
+        />
+        {errorMessage ? <Text style={styles.error}>Username is already in use. Please enter another one.</Text> : null}
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="Email (Eg. Example@email.com)"
           name="email"
-          placeholderTextColor="#ccc"
+          placeholderTextColor="#CCC"
           value={formData.email}
           onChangeText={(text) => handleInputChange('email', text)}
         />
-        {errorMessage ? <Text style={styles.error}>Email invalid. Please try again.</Text> : null}
+        {errorMessage ? <Text style={styles.error}>The email you have entered is in use already.</Text> : null}
         
         <TextInput
           style={styles.input}
@@ -60,19 +73,17 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)} 
         />
-        {errorMessage ? <Text style={styles.error}>Password invalid. Please try again.</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>LOG IN</Text>
+
+        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Text style={styles.forgotPassword}>Forgot password</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
-          <Text style={styles.buttonText}>SIGN UP</Text>
-        </TouchableOpacity>
+       
+        <Text style={styles.accountAlready} >Already have an account?</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.buttonText}   >LOG IN</Text>
+          </TouchableOpacity>
       </View>
     </View>
   );
@@ -94,7 +105,7 @@ const styles = StyleSheet.create({
   highlight: {
     color: '#48E0E4',
   },
- card: {
+  card: {
     width: '100%',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
@@ -132,11 +143,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    alignItems: 'center',
   },
   forgotPassword: {
     color: '#fff',
     textAlign: 'center',
     marginTop: 10,
     textDecorationLine: 'underline',
+  },
+  accountAlready: {
+    color: '#2E7F9E',
+    textAlign: 'center',
+    marginTop: 10,
+    alignItems: 'center',
   },
 });

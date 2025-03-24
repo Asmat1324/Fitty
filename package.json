@@ -1,7 +1,7 @@
 {
   "name": "fitty",
   "version": "1.0.0",
-  "type": "module", 
+  "type": "module",
   "description": "A fitness-social media app",
   "main": "backend/server.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "@babel/plugin-transform-nullish-coalescing-operator": "^7.26.6",
     "@babel/plugin-transform-optional-chaining": "^7.25.9",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "expo": "^52.0.37",
     "express": "^4.17.1",
     "glob": "^11.0.1",

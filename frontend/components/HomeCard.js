@@ -10,7 +10,7 @@ const HomeCard = () => {
       </Card.Content>
       <Card.Actions>
         <Button onPress={() => console.log('Pressed')}>Get Started</Button>
-      </Card.Actions>
+      </Card.Actions>  
     </Card>
   );
 };

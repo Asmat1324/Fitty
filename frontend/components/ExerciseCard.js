@@ -1,12 +1,17 @@
 import React from 'react';
 import { Card, Title } from 'react-native-paper'; 
 import { Text, Image, View, StyleSheet } from 'react-native';
-
+function capitalizeFirstLetter(string) {
+  if (!string) return string; // handle undefined or null input
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 const ExerciseCard = ({ data }) => {
+  
   return (
     <Card style={styles.card}>
       <Card.Content>
-        <Title style={styles.title}>{data.bodyPart}</Title>
+        {console.log("Body Part:", data.bodyPart)}
+        <Title style={styles.title}>{capitalizeFirstLetter(data.bodyPart)}</Title>
         <View style={styles.imageContainer}>
           <Image 
             source={{ uri: data.gifUrl }}  
@@ -25,10 +30,10 @@ const ExerciseCard = ({ data }) => {
         </Text>
         <Text style={styles.paragraph}>Instructions:</Text>
         {data.instructions?.map((step, index) => (
-  <Text key={index}>
-    • {step}
-  </Text>
-))}
+        <Text key={index}>
+         • {step}
+        </Text>
+        ))}  
 
       </Card.Content>
     </Card>

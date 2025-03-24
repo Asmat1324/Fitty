@@ -12,6 +12,7 @@ import HomeScreen from './screens/HomeScreen';
 import TrackerScreen from './screens/TrackerScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import NotificationScreen from './screens/NotificationScreen'
 // Screen Names
@@ -64,9 +65,15 @@ const MainContainer = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
+          <>
           <Stack.Screen name="Login">
             {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
           </Stack.Screen>
+          <Stack.Screen name="Signup">
+              {props => <SignupScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
+            </Stack.Screen>
+          
+          </>
         ) : (
           <Stack.Screen name="MainTabs" component={MainTabs} />
         )}
