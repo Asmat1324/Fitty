@@ -11,7 +11,7 @@ const router = express.Router();
 //@desc Register a new user
 //@access Public
 router.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+    const { firstname, lastname, username, email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) {
@@ -21,6 +21,8 @@ router.post('/register', async (req, res) => {
         const passwordHash = await bcrypt.hash(password, salt);
 
         user = new User({
+            firstname,
+            lastname,
             username,
             email,
             password: passwordHash

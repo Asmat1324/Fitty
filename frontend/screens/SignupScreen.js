@@ -1,23 +1,21 @@
 import { Link } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function SignupScreen({ navigation, setIsAuthenticated }) {
+export default function SignupScreen({ navigation}) {
   const [formData, setFormData] = useState({
      username: "",
      email: "",
      password: "" });
- // const [email, setEmail] = useState('');
- // const [password, setPassword] = useState('');
+  const [image, setImage] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const handleInputChange = (name, value) => {
-    setFormData({...formData, [name]: value});
-  }
+  const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
   const handleSignup = async (e) => {
       e.preventDefault();
-      setErrorMessage("");
-
+      setErrorMessage(""); 
    try{
     const response = await fetch("http://192.168.1.70:19000/api/auth/register", {
       method: "POST",
@@ -27,7 +25,6 @@ export default function SignupScreen({ navigation, setIsAuthenticated }) {
 
     if(response.ok){
       const data = await response.json();
-      //await AsyncStorage.setItem('token', data.token);
       navigation.navigate('Login')
     }
     else {
@@ -39,12 +36,57 @@ export default function SignupScreen({ navigation, setIsAuthenticated }) {
     setErrorMessage("An error occured. Please try again.");
    }
   };
+  const openCamera = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("You've refused to allow this app to access your cam.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync();
+    if (!result.cancelled) {
+    setImage(result.assets[0].uri);
+    }
+  };
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("You've refused to allow this app to access your photos!");
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      //mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4,3],
+      quality: 1,
+    });
+    console.log(result.uri);
+    if (!result.cancelled) {
+      setImage(result.assets[0].uri);
+      console.log('Image URI:', result.assets[0].uri);
+    }};   
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
       <Text style={styles.title}>But first... <Text style={styles.highlight}>Create an account!</Text></Text>
       <View style={styles.card}>
+      <TextInput
+          style={styles.input}
+          placeholder="First Name"
+          name="firstname"
+          placeholderTextColor="#CCC"
+          value={formData.firstname}
+          onChangeText={(text) => handleInputChange('firstname', text)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Last Name"
+          name="lastname"
+          placeholderTextColor="#CCC"
+          value={formData.lastname}
+          onChangeText={(text) => handleInputChange('lastname', text)}
+        />
       <TextInput
           style={styles.input}
           placeholder="Username"
@@ -73,16 +115,22 @@ export default function SignupScreen({ navigation, setIsAuthenticated }) {
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)} 
         />
-
-
+        <View style={styles.profPicPad}>
+        <Image source={{ uri: image }} style={styles.profPicImage} />
+        </View>
+        <View style={styles.profPic}>
+          <TouchableOpacity  onPress={pickImage} ><Text style={styles.buttonText}>Select Photo</Text></TouchableOpacity>
+          <TouchableOpacity  ><Text style={styles.buttonText}> | </Text></TouchableOpacity>
+          <TouchableOpacity  onPress={openCamera}><Text style={styles.buttonText}>Take Photo</Text></TouchableOpacity>
+        </View>
         <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+          <Text style={styles.submitButtonText}>CREATE ACCOUNT</Text>
         </TouchableOpacity>
 
        
-        <Text style={styles.accountAlready} >Already have an account?</Text>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.buttonText}   >LOG IN</Text>
+        
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.accountAlready} >Already have an account? Tap here</Text>
           </TouchableOpacity>
       </View>
     </View>
@@ -131,10 +179,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#2E6F75',
+    backgroundColor: '#2E5F73',
     borderRadius: 20,
     padding: 12,
-    width: '50%',  
+    width: '70%',  
     marginTop: 10,
     alignItems: 'center',  
     justifyContent: 'center',
@@ -142,7 +190,13 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '',
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 25,
+    fontWeight: 700,
     alignItems: 'center',
   },
   forgotPassword: {
@@ -157,4 +211,41 @@ const styles = StyleSheet.create({
     marginTop: 10,
     alignItems: 'center',
   },
+  profPic: {
+    backgroundColor: '#2E6F75',
+    borderRadius: 50,
+    padding: 10,
+    width: '58%',  
+    marginTop: 0,
+    flexDirection: 'row' ,
+    alignItems: 'center',  
+    justifyContent: 'center',
+  },
+  profPicText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    alignItems: 'center',
+  },
+  profPicImage: {
+    width: 100, 
+    height: 100,
+    backgroundColor: '#A999',
+    borderWidth: 2,
+    borderColor: "#fff",
+    borderRadius: 50,  
+    marginTop: 10,
+  },
+  profPicPad: {
+    backgroundColor: '#2E6F75',
+    borderTopLeftRadius: 60,
+    borderTopRightRadius: 60,
+    paddingTop: -2,
+    paddingBottom: 10,
+    width: '30%',  
+    marginBottom: -10,
+    alignItems: 'center',  
+    justifyContent: 'center',
+  },
 });
+

@@ -61,14 +61,15 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           onChangeText={(text) => handleInputChange('password', text)} 
         />
         {errorMessage ? <Text style={styles.error}>Password invalid. Please try again.</Text> : null}
+        <TouchableOpacity>
+          <Text style={styles.forgotPassword}>Forgot password</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>LOG IN</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Text style={styles.forgotPassword}>Forgot password</Text>
-        </TouchableOpacity>
+        
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
           <Text style={styles.buttonText}>SIGN UP</Text>
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
   forgotPassword: {
     color: '#fff',
     textAlign: 'center',
-    marginTop: 10,
+    marginBottom: 5,
     textDecorationLine: 'underline',
   },
 });
