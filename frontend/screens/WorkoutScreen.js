@@ -44,7 +44,7 @@ const WorkoutScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View>
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
         <Text style={styles.buttonText}>Fetch Exercises</Text>
       </TouchableOpacity>
@@ -58,7 +58,7 @@ const WorkoutScreen = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ExerciseCard data={item} />}
       />
-    </ScrollView>
+   </View>
   );
 };
 
