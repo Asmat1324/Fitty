@@ -73,7 +73,6 @@ export default function TrackerScreen() {
           <Text style={styles.buttonText}>Add Food</Text>
         </TouchableOpacity>
         
-        {/* Adding margin to space out the food list from the button */}
         <FlatList
           style={styles.foodList}
           data={foodLog}
