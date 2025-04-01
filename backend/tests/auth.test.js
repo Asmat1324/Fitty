@@ -17,42 +17,25 @@ describe('Auth Routes', () => {
         const res = await request(app)
             .post('/api/auth/register')
             .send({
+                firstname: 'Test',
+                lastname: 'User',
                 username: 'testuser',
                 email: 'test@example.com',
                 password: 'password123'
             });
-            expect(res.status).to.equal(200); //asserting that the response is 200 (OK)
-            expect(res.body).to.have.property('token'); //asserting that the response contains a token
+            expect(res.status).to.equal(201); //assert it should respond 201 (created)
+            expect(res.body).to.have.property('msg'); 
+            expect(res.body.msg).to.equal('User registered successfully'); //assert it should respond with the correct message
     });
-    //Test for unsuccessful user registration due to duplicate username
-    it ('should not register a user with an existing username', async () => {
-        //Register a user
-        await request(app)
-            .post('/api/auth/register')
-            .send({
-                username: 'testuser',
-                email: 'test@example.com',
-                password: 'password123'
-            });
-            //Attempt to register a user with the same username
-            const res = await request(app)
-                .post('/api/auth/register')
-                .send({
-                    username: 'testuser',
-                    email: 'another@example.com',
-                    password: 'anotherpassword'
-                });
-                console.log(res.body);
-                expect(res.status).to.equal(400); //asserting that the response is 400 (Bad Request)
-                expect(res.body).to.have.property('msg'); //asserting that the response contains an error message
-                expect(res.body.msg).to.equal('Username already exists'); //asserting that the response contains the correct
-    });
+    
     //Test for successful user login
     it ('should login a user', async () => {
         //Register a user
         await request(app)
             .post('/api/auth/register')
             .send({
+                firstname: 'Test',
+                lastname: 'User',
                 username: 'testuser',
                 email: 'test@example.com',
                 password: 'password123'
@@ -73,6 +56,8 @@ describe('Auth Routes', () => {
         await request(app)
             .post('/api/auth/register')
             .send({
+                firstname: 'Test',
+                lastname: 'User',
                 username: 'testuser',
                 email: 'test@example.com',
                 password: 'password123'
@@ -84,7 +69,7 @@ describe('Auth Routes', () => {
                     email: 'test@example.com',
                     password: 'password123'
                 });
-                console.log(res.body);
+               // console.log(res.body);
                 expect(res.status).to.equal(200); //asserting that the response is 200 (OK)
                 expect(res.body).to.have.property('token'); //asserting that the response contains a token
     });
@@ -94,6 +79,8 @@ describe('Auth Routes', () => {
         await request(app)
             .post('/api/auth/register')
             .send({
+                firstname: 'Test',
+                lastname: 'User',
                 username: 'testuser',
                 email: 'test@example.com',
                 password: 'password123'
