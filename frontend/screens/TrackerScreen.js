@@ -1,27 +1,12 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
-import { Appbar } from "react-native-paper";
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 
-const TrackerScreen = ({ navigation }) => {
-  const [food, setFood] = useState("");
-  const [nutritionData, setNutritionData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+export default function TrackerScreen() {
+  const [food, setFood] = useState('');
+  const [foodLog, setFoodLog] = useState([]);
+  const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fats: 0 });
 
-  const fetchNutritionData = async () => {
-    if (!food) return;
-
-    setLoading(true);
-    setError("");
-    setNutritionData(null);
-
+  const fetchNutrition = async (foodName) => {
     try {
       const response = await fetch(
         "https://trackapi.nutritionix.com/v2/natural/nutrients",
@@ -32,119 +17,166 @@ const TrackerScreen = ({ navigation }) => {
             "x-app-id": "6d574f12",
             "x-app-key": "89e747052e54184b1e557825dc0884fc",
           },
-          body: JSON.stringify({ query: food }),
+          body: JSON.stringify({ query: foodName }),
         }
       );
 
+      if (!response.ok) {
+        throw new Error("Failed to fetch nutrition data");
+      }
+
       const data = await response.json();
+      console.log("API Response:", data);
 
       if (data.foods && data.foods.length > 0) {
-        const totalCalories = data.foods.reduce(
-          (sum, item) => sum + item.nf_calories,
-          0
-        );
-        setNutritionData({ foods: data.foods, totalCalories });
-      } else {
-        setError("No nutrition data found. Try another item.");
+        const newEntry = {
+          name: foodName,
+          calories: Math.round(data.foods[0].nf_calories) || 0,
+          protein: Math.round(data.foods[0].nf_protein) || 0,
+          carbs: Math.round(data.foods[0].nf_total_carbohydrate) || 0,
+          fats: Math.round(data.foods[0].nf_total_fat) || 0,
+        };
+
+        setFoodLog([...foodLog, newEntry]);
+        setTotals({
+          calories: totals.calories + newEntry.calories,
+          protein: totals.protein + newEntry.protein,
+          carbs: totals.carbs + newEntry.carbs,
+          fats: totals.fats + newEntry.fats,
+        });
       }
     } catch (error) {
-      setError("Error fetching data. Please try again.");
-    } finally {
-      setLoading(false);
+      console.error("Fetch Error:", error);
+    }
+  };
+
+  const handleAddFood = () => {
+    if (food.trim() !== '') {
+      fetchNutrition(food);
+      setFood('');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Appbar.Header style={{ backgroundColor: "#000" }}>
-        <Appbar.Content
-          title="Calorie Calculator"
-          titleStyle={styles.buttonText}
+      <Text style={styles.title}>
+        Food <Text style={styles.highlight}>Tracker</Text>
+      </Text>
+      <View style={styles.card}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter food"
+          value={food}
+          onChangeText={setFood}
         />
-      </Appbar.Header>
-
-      <Text style={styles.title}>Enter Food Item:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., 1 apple, 2 eggs"
-        placeholderTextColor="#aaa"
-        value={food}
-        onChangeText={setFood}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={fetchNutritionData}>
-        <Text style={styles.buttonText}>Get Nutrition Info</Text>
-      </TouchableOpacity>
-
-      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      {nutritionData && (
-        <View style={styles.resultCard}>
-          <Text style={styles.resultText}>
-            Total Calories: {nutritionData.totalCalories} kcal
-          </Text>
-          {nutritionData.foods.map((item, index) => (
-            <View key={index}>
-              <Text style={styles.resultText}>
-                🍎 {item.food_name} - {item.nf_calories} kcal
-              </Text>
+        <TouchableOpacity style={styles.button} onPress={handleAddFood}>
+          <Text style={styles.buttonText}>Add Food</Text>
+        </TouchableOpacity>
+        
+        <FlatList
+          style={styles.foodList}
+          data={foodLog}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.foodItem}>
+              <Text style={styles.foodName}>{item.name}</Text>
+              <Text style={styles.foodCalories}>{item.calories} kcal</Text>
             </View>
-          ))}
-        </View>
-      )}
+          )}
+        />
+        <Text style={styles.totals}>
+          Total: {totals.calories} kcal | {totals.protein}g Protein | {totals.carbs}g Carbs | {totals.fats}g Fats
+        </Text>
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#1A1A1A',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
-    backgroundColor: "#000",
   },
   title: {
-    fontSize: 20,
-    color: "#fff",
-    marginBottom: 10,
+    fontSize: 32,
+    color: '#fff',
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  highlight: {
+    color: '#48E0E4',
+  },
+  card: {
+    width: '90%',
+    backgroundColor: '#222',
+    padding: 25,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#fff',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   input: {
-    backgroundColor: "#2E6F75",
-    color: "#fff",
-    borderRadius: 20,
-    padding: 12,
-    marginBottom: 10,
-    textAlign: "center",
+    width: '100%',
+    backgroundColor: '#333',
+    color: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
   },
   button: {
-    backgroundColor: "#48E0E4",
-    borderRadius: 20,
-    padding: 12,
-    alignItems: "center",
-    marginTop: 10,
+    backgroundColor: '#48E0E4',
+    borderRadius: 25,
+    paddingVertical: 15,
+    width: '75%',
+    marginTop: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  error: {
-    color: "#FF4D4D",
-    textAlign: "center",
-    fontSize: 12,
-    marginBottom: 10,
-  },
-  resultCard: {
+  foodList: {
     marginTop: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    padding: 15,
-    borderRadius: 10,
+    width: '100%',
   },
-  resultText: {
-    color: "#fff",
+  foodItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    backgroundColor: '#333',
+  },
+  foodName: {
+    color: '#fff',
     fontSize: 16,
-    marginBottom: 5,
+  },
+  foodCalories: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '300',
+  },
+  totals: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 15,
+    color: '#48E0E4',
+    textAlign: 'center',
   },
 });
-
-export default TrackerScreen;

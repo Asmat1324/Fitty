@@ -3,7 +3,7 @@ import { Card, Title, Paragraph, Button } from 'react-native-paper';
 
 const HomeCard = () => {
   return (
-    <Card style={{ marginBottom: 20 }}>
+    <Card >
       <Card.Content>
         <Title>Welcome to Fitty</Title>
         <Paragraph>Your fitness journey starts here.</Paragraph>
