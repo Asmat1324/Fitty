@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+
 // Screens
 import HomeScreen from './screens/HomeScreen';
 import TrackerScreen from './screens/TrackerScreen';

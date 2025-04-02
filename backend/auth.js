@@ -3,15 +3,31 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from './user.js';
-
+import multer from 'multer';
+import path from 'path';
 
 
 const router = express.Router();
+//Creating storage for pictures
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads'); // folder to save uploaded files
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  });
+  
+const upload = multer({ storage });
 //@route POST /register
 //@desc Register a new user
 //@access Public
-router.post('/register', async (req, res) => {
-    const { firstname, lastname, username, email, password } = req.body;
+router.post('/register',upload.single('profileImage'), async (req, res) => {
+    const {
+        firstname, lastname, username, email, password
+      } = req.body 
     try {
         let user = await User.findOne({ email });
         if (user) {
@@ -25,7 +41,8 @@ router.post('/register', async (req, res) => {
             lastname,
             username,
             email,
-            password: passwordHash
+            password: passwordHash,
+            profilePicture: req.file.filename,
         });
 
         await user.save();
@@ -71,7 +88,10 @@ router.post('/login', async (req, res) => {
             { expiresIn: 360000 },
             (err, token) => {
                 if (err) throw err;
-                res.json({ token });
+                const userObj = user.toObject();  
+                delete userObj.password;  
+            
+                res.json({ token, user: userObj });
             }
         );
     } catch (err) {

@@ -5,6 +5,7 @@ import connectDB from './db.js';
 import dotenv from 'dotenv';
 import authRoutes from './auth.js';
 import cors from 'cors';
+
 import mongoose from 'mongoose';
 dotenv.config();
 
@@ -16,7 +17,8 @@ connectDB();
 
 app.use(cors());
 //Middleware to parse JSON
-app.use(express.json({extended: false}));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 //Define Routes
 app.use('/api/auth', authRoutes);

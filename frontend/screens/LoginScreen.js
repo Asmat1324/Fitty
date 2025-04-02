@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export default function LoginScreen({ navigation, setIsAuthenticated }) {
+import { AuthContext } from '../utilities/authContext';
+export default function LoginScreen({ navigation, setIsAuthenticated}) {
   const [formData, setFormData] = useState({ email: "", password: "" });
  // const [email, setEmail] = useState('');
  // const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
+  const {setUser, setToken } = useContext(AuthContext);
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }
@@ -25,6 +25,8 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
     if(response.ok){
       const data = await response.json();
       await AsyncStorage.setItem('token', data.token);
+      setToken(data.token);    // store token
+      setUser(data.user); 
       setIsAuthenticated(true);
     }
     else {

@@ -6,21 +6,40 @@ import * as Permissions from 'expo-permissions';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation}) {
-  const [formData, setFormData] = useState({
-     username: "",
-     email: "",
-     password: "" });
   const [image, setImage] = useState(null);
+  const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
+    username: '',
+    email: '',
+    password: ''
+  });
   const [errorMessage, setErrorMessage] = useState('');
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
   const handleSignup = async (e) => {
-      e.preventDefault();
+      
       setErrorMessage(""); 
    try{
+   const form = new FormData();
+   if (image) {
+    form.append('profileImage', {
+      uri: image,
+      type: 'image/jpeg', // or your image MIME type
+      name: 'profilePic.jpg',
+    });
+  }
+   form.append('firstname', formData.firstname);
+   form.append('lastname', formData.lastname);
+   form.append('username', formData.username);
+   form.append('email', formData.email);
+   form.append('password', formData.password);
+   
+
+
     const response = await fetch("http://192.168.1.70:19000/api/auth/register", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(formData),
+      headers: { 'Content-Type': 'application/json'},
+      body:  form,
     });
 
     if(response.ok){
@@ -36,17 +55,26 @@ export default function SignupScreen({ navigation}) {
     setErrorMessage("An error occured. Please try again.");
    }
   };
+
+//If user chooses to take a photo using camera
   const openCamera = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (permissionResult.granted === false) {
       alert("You've refused to allow this app to access your cam.");
       return;
     }
-    const result = await ImagePicker.launchCameraAsync();
-    if (!result.cancelled) {
-    setImage(result.assets[0].uri);
+    let result = await ImagePicker.launchCameraAsync({
+      //mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4,3],
+      quality: 1,
+    });
+    if (!result.cancelled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri);
     }
   };
+
+  //If user chooses to use image from camera roll
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -59,11 +87,10 @@ export default function SignupScreen({ navigation}) {
       allowsEditing: true,
       aspect: [4,3],
       quality: 1,
+
     });
-    console.log(result.uri);
-    if (!result.cancelled) {
-      setImage(result.assets[0].uri);
-      console.log('Image URI:', result.assets[0].uri);
+    if (!result.cancelled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri)
     }};   
 
   return (
