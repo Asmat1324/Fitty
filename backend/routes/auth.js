@@ -3,6 +3,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
+import Post from '../models/post.js'
 import multer from 'multer';
 import path from 'path';
 
@@ -12,34 +13,25 @@ const router = express.Router();
 
 //configure multer for file uploads
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../uploads/profile_pictures'));
+    destination: (req, file, cb) => {
+      cb(null, 'backend/uploads'); // folder to save uploaded files
     },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    },
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: function(req, file, cb) {
-        const filetypes = /jpeg|jpg|png/;
-        const mimetype = filetypes.test(file.mimetype);
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        if (mimetype && extname) {
-            return cb(null, true);
-        } 
-        cb(null, false); //reject unsupported files
-        
-    },
-});
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  });
+  
+const upload = multer({ storage });
 //@route POST /register
 //@desc Register a new user
 //@access Public
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
+
+  console.log('Received file:', req.file);
     const { firstname, lastname, username, email, password } = req.body;
-    const profilePicture = req.file ? '/uploads/profile_pictures/${req.file.filename}' : '';
+ // const profilePicture = req.file ? 'backend/uploads/profile_pictures/${req.file.filename}' : '';
 
     try {
         let userByEmail = await User.findOne({ email });
@@ -60,7 +52,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
             username,
             email,
             password: passwordHash,
-            profilePicture: profilePicture,
+            profilePicture:  req.file ? req.file.filename : '',
         });
 
         await newUser.save();
@@ -106,12 +98,45 @@ router.post('/login', async (req, res) => {
             { expiresIn: 360000 },
             (err, token) => {
                 if (err) throw err;
-                res.json({ token });
+                const userObj = user.toObject();  
+                delete userObj.password;  
+            
+                res.json({ token, user: userObj });
             }
         );
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
+    }
+});
+router.post('/userPost', async (req, res) => {
+    const { user, imageUri, caption, likes, comments } = req.body;
+   try{
+    let userID;
+    const userDoc = await User.findById(user);
+if (!userDoc) {
+  return res.status(400).json({ msg: 'User not found in database' });
+}
+    console.log("USER ID: " + userDoc._id)
+    if(user){
+        userID= User.findById(user)
+    }
+    else{
+        return res.status(400).json({ msg: 'USER NOT FOUND' });
+    }
+
+    const newPost = new Post({
+        userID: userDoc._id,
+        imageUri,
+        caption,
+        likes,
+        comments,
+    });
+    await newPost.save();
+    res.status(201).json({ msg: 'Post uploaded successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
     }
 });
 

@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
+import { AuthContext } from '../utilities/authContext';
 
 export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-/*
+  const {setUser, setToken } = useContext(AuthContext);
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
-  }*/
+  }
   const handleLogin = async (e) => {
       e.preventDefault();
       setErrorMessage("");
@@ -19,22 +21,21 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
     const apiUrl = `${config.apiBaseUrl}/api/auth/login`; // imported variable from config.js
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        username: loginIdentifier,
-        email: loginIdentifier,
-        password: password,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
     });
-
-    const responseData = await response.json();
-
-    if(response.ok){
+    
+    const responseData = await response.json(); // read once
+    
+    if (response.ok) {
+      
       await AsyncStorage.setItem('token', responseData.token);
+      setToken(responseData.token); // store token
+      console.log("USER IS: " + response.user)
+      setUser(responseData.user);
       setIsAuthenticated(true);
-    }
-    else {
-    setErrorMessage(responseData.msg || "Invalid credentials.");
+    } else {
+      setErrorMessage(responseData.msg || "Invalid credentials.");
     }
    }catch(err){
     setErrorMessage("An error occured. Please try again.");
@@ -47,27 +48,27 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
       <View style={styles.card}>
-        <TextInput
+      <TextInput
           style={styles.input}
-          placeholder="Email or username"
-          //name="email"
+          placeholder="Email"
+          name="email"
           placeholderTextColor="#ccc"
-          value={loginIdentifier}
-          onChangeText={setLoginIdentifier} 
+          value={formData.email}
+          onChangeText={(text) => handleInputChange('email', text)}
         />
         {errorMessage ? <Text style={styles.error}> {errorMessage}</Text> : null}
        {/*{errorMessage.includes('Email') || errorMessage.includes('Username') || errorMessage === "Invalid credentials." ? (
         <Text style={styles.error}> {errorMessage}</Text>
        ) : null}
         */}
-        <TextInput
+         <TextInput
           style={styles.input}
           placeholder="Password"
           name="password"
           placeholderTextColor="#CCC"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          value={formData.password}
+          onChangeText={(text) => handleInputChange('password', text)} 
         />
         {/*{errorMessage.includes('Password') || errorMessage === "Invalid credentials." ? (
           <Text style={styles.error}>{errorMessage}</Text>

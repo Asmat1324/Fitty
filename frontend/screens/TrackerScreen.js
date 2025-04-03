@@ -58,7 +58,7 @@ export default function TrackerScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { flex: 1 }]}>
       <Text style={styles.title}>
         Food <Text style={styles.highlight}>Tracker</Text>
       </Text>

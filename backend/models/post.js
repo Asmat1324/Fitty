@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const PostSchema = new mongoose.Schema({
     // link the post to the user object from the database
-    user: {
+    userID: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
@@ -11,10 +11,8 @@ const PostSchema = new mongoose.Schema({
     imageUri: { type: String, required: true },
     caption: { type: String },
    // array of ObjectIds to see which users liked the post
-    likes: [{ 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }],
+    likes: {type: Number, default: 0},
+    comments: {type: Number, default: 0},
     date_created: { type: Date, default: Date.now },
 });
 

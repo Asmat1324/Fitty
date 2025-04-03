@@ -10,13 +10,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 // Screens
 import HomeScreen from './screens/HomeScreen';
 import TrackerScreen from './screens/TrackerScreen';
+import TrackerContainer from './screens/TrackerContainer';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import NotificationScreen from './screens/NotificationScreen'
 // Screen Names
-const homeName = 'Home';
+const homeName = 'Fitty Stream';
 const trackerName = 'Tracker';
 const notificationName = 'Notifications';
 const settingsName = 'Settings';
@@ -52,7 +53,7 @@ const MainTabs = () => (
   >
     <Tab.Screen name={homeName} component={HomeScreen} />
     <Tab.Screen name={workoutName} component={WorkoutScreen} />
-    <Tab.Screen name={trackerName} component={TrackerScreen} />
+    <Tab.Screen name={trackerName} component={TrackerContainer} />
     <Tab.Screen name={notificationName} component={NotificationScreen} />
     <Tab.Screen name={settingsName} component={SettingsScreen} />
   </Tab.Navigator>
@@ -62,7 +63,7 @@ const MainContainer = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer options={{ headerShown: false }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <>

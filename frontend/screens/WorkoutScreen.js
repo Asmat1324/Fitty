@@ -1,26 +1,42 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  ActivityIndicator,  
-  TouchableOpacity 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import { Appbar, Button } from "react-native-paper";
-import ExerciseCard from "../components/ExerciseCard"; // Make sure this path matches your folder structure exactly
-
+import ExerciseCard from "../components/ExerciseCard";
 const WorkoutScreen = ({ navigation }) => {
+  const [bodyPart, setBodyPart] = useState("back");
+  const [dropdownVisible, setDropdownVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [exerciseData, setExerciseData] = useState([]);
+
+  const categories = [
+    "back",
+    "cardio",
+    "chest",
+    "lower arms",
+    "lower legs",
+    "neck",
+    "shoulders",
+    "upper arms",
+    "upper legs",
+    "waist",
+  ];
 
   const fetchExercises = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("https://exercisedb.p.rapidapi.com/exercises", {
+      const url = `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${bodyPart}`;
+      console.log(url);
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -42,27 +58,43 @@ const WorkoutScreen = ({ navigation }) => {
     }
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
+  return (
+    <View style={styles.container}>
+      {/* Custom Select */}
+      <TouchableOpacity
+        style={styles.select}
+        onPress={() => setDropdownVisible(!dropdownVisible)}
+      >
+        <Text style={styles.selectText}>{bodyPart.toUpperCase()}</Text>
+      </TouchableOpacity>
+
+      {dropdownVisible && (
+        <View style={styles.dropdown}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={styles.dropdownItem}
+              onPress={() => {
+                setBodyPart(category);
+                setDropdownVisible(false);
+              }}
+            >
+              <Text style={styles.dropdownText}>{category}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
         <Text style={styles.buttonText}>Fetch Exercises</Text>
       </TouchableOpacity>
-
-      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
       <FlatList
         data={exerciseData}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ExerciseCard data={item} />}
-        ListHeaderComponent={renderHeader} 
-        contentContainerStyle={styles.listContent}
       />
+      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -71,16 +103,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-  },
-  headerContainer: {
     padding: 20,
+  },
+  select: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+  },
+  selectText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  dropdown: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  dropdownItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#000",
   },
   button: {
     backgroundColor: "#48E0E4",
     borderRadius: 20,
     padding: 12,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
   buttonText: {
     color: "#fff",
@@ -91,10 +144,7 @@ const styles = StyleSheet.create({
     color: "#FF4D4D",
     textAlign: "center",
     fontSize: 12,
-    marginBottom: 10,
-  },
-  listContent: {
-    paddingBottom: 20,
+    marginTop: 10,
   },
 });
 

@@ -4,63 +4,55 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'reac
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
-import config from '../config';
+ import config from '../config';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation}) {
-  const [formData, setFormData] = useState({
-    firstname: "",
-    lastname: "", 
-    username: "",
-    email: "",
-    password: "" });
   const [image, setImage] = useState(null);
+  const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
+    username: '',
+    email: '',
+    password: ''
+  });
   const [errorMessage, setErrorMessage] = useState('');
-  
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
+ 
+  // SIGNUP HANDLING
   const handleSignup = async (e) => {
-      e.preventDefault();
+      
       setErrorMessage(""); 
    try{
-    const formDataToSend = new FormData();
-    formDataToSend.append('firstname', formData.firstname);
-    formDataToSend.append('lastname', formData.lastname);
-    formDataToSend.append('username', formData.username);
-    formDataToSend.append('email', formData.email);
-    formDataToSend.append('password', formData.password);
-    
-    if (image) {
-      const fileInfo = await FileSystem.getInfoAsync(image);
-      if (fileInfo.exists) {
-        const base64 = await FileSystem.readAsStringAsync(image, { encoding: FileSystem.EncodingType.Base64 });
-        formDataToSend.append('profilePicture', {
-          uri: image,
-          name: image.split('/').pop(),
-          type: 'image/' + image.split('.').pop(),
-          data: base64,
-        });
-      }
-    }
-
-    const apiUrl = `${config.apiBaseUrl}/api/auth/register`; // imported variable from config.js
-    const response = await fetch(apiUrl, {
-    //const response = await fetch("http://192.168.1.161:19000/api/auth/register", {
-      method: "POST",
-      //headers: {"Content-Type": "application/json"},
-      //body: JSON.stringify(formData),
-      body: formDataToSend,
+   const form = new FormData();
+   if (image) {
+    form.append('profilePicture', {
+      uri: image,
+      type: 'image/jpeg', // or your image MIME type
+      name: 'profilePic.jpg',
     });
+  }
+   form.append('firstname', formData.firstname);
+   form.append('lastname', formData.lastname);
+   form.append('username', formData.username);
+   form.append('email', formData.email);
+   form.append('password', formData.password);
+   
 
+    const apiUrl = `${config.apiBaseUrl}/api/auth/register`;
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      body:  form,
+    });
     const responseData = await response.json();
-
     if(response.ok){
       //const data = await response.json();
       navigation.navigate('Login')
     }
     else {
-     // const { errorMessage } = await response.json();
-     // setErrorMessage(errorMessage || "Invalid credentials.");
-     setErrorMessage(responseData.msg || "Registration failed.");
+      const { errorMessage } = await response.json();
+      //setErrorMessage(errorMessage || "Invalid credentials.");
+      setErrorMessage(responseData.msg || "Registration failed.");
     }
    }
    catch(err){
@@ -69,18 +61,27 @@ export default function SignupScreen({ navigation}) {
    }
   };
 
-  const openCamera = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("You've refused to allow this app to access your camera.");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync();
-    if (!result.cancelled) {
-    setImage(result.assets[0].uri);
-    }
-  };
 
+
+//If user chooses to take a photo using camera
+const openCamera = async () => {
+  const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+  if (permissionResult.granted === false) {
+    alert("You've refused to allow this app to access your cam.");
+    return;
+  }
+  let result = await ImagePicker.launchCameraAsync({
+    //mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [4,3],
+    quality: 1,
+  });
+  if (!result.cancelled && result.assets && result.assets.length > 0) {
+    setImage(result.assets[0].uri);
+  }
+};
+
+  //If user chooses to use image from camera roll
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -89,21 +90,15 @@ export default function SignupScreen({ navigation}) {
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       //mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4,3],
       quality: 1,
-      base64: false,
+
     });
-
-    //console.log(result.uri);
-    if (!result.cancelled) {
-      setImage(result.assets[0].uri);
-      console.log('Image URI:', result.assets[0].uri);
-    }
-    };   
-
+    if (!result.cancelled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri)
+    }};   
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
@@ -133,7 +128,7 @@ export default function SignupScreen({ navigation}) {
           value={formData.username}
           onChangeText={(text) => handleInputChange('username', text)}
         />
-        {errorMessage.includes('Username') ? <Text style = {styles.error}>{errorMessage}</Text> : null}
+        {errorMessage ? <Text style={styles.error}>Username is already in use. Please enter another one.</Text> : null}
         <TextInput
           style={styles.input}
           placeholder="Email (Eg. Example@email.com)"
@@ -142,7 +137,7 @@ export default function SignupScreen({ navigation}) {
           value={formData.email}
           onChangeText={(text) => handleInputChange('email', text)}
         />
-        {errorMessage.includes('Email') ? <Text style = {styles.error}>{errorMessage}</Text> : null}
+        {errorMessage ? <Text style={styles.error}>The email you have entered is in use already.</Text> : null}
         
         <TextInput
           style={styles.input}
@@ -165,13 +160,12 @@ export default function SignupScreen({ navigation}) {
           <Text style={styles.submitButtonText}>CREATE ACCOUNT</Text>
         </TouchableOpacity>
 
+       
+        
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.accountAlready} >Already have an account? Tap here</Text>
           </TouchableOpacity>
       </View>
-      {errorMessage && !errorMessage.includes('Username') && !errorMessage.includes('Email') && ( 
-        <Text style = {styles.error}>{errorMessage}</Text>
-      )}
     </View>
   );
 }
@@ -287,4 +281,3 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
