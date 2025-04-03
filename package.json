@@ -25,7 +25,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^6.13.0",
     "multer": "^1.4.5-lts.2",
-    "react-native-dotenv": "^3.4.11",
     "rimraf": "^6.0.1",
     "uuid": "^11.0.5"
   },
@@ -35,6 +34,7 @@
     "chai": "^5.2.0",
     "mocha": "^11.1.0",
     "nodemon": "^2.0.15",
+    "react-native-dotenv": "^3.4.11",
     "supertest": "^7.1.0"
   },
   "author": "Fitty",

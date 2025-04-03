@@ -4,7 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'reac
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
-import { API_BASE_URL } from '@env';
+import config from '../config';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation}) {
@@ -42,9 +42,9 @@ export default function SignupScreen({ navigation}) {
       }
     }
 
-    const apiUrl = `${API_BASE_URL}/api/auth/register`; // imported variable from .env file
+    const apiUrl = `${config.apiBaseUrl}/api/auth/register`; // imported variable from config.js
     const response = await fetch(apiUrl, {
-    //const response = await fetch("http://192.168.1.70:19000/api/auth/register", {
+    //const response = await fetch("http://192.168.1.161:19000/api/auth/register", {
       method: "POST",
       //headers: {"Content-Type": "application/json"},
       //body: JSON.stringify(formData),
@@ -136,7 +136,7 @@ export default function SignupScreen({ navigation}) {
         {errorMessage.includes('Username') ? <Text style = {styles.error}>{errorMessage}</Text> : null}
         <TextInput
           style={styles.input}
-          placeholder="Email or Username(Eg. Example@email.com)"
+          placeholder="Email (Eg. Example@email.com)"
           name="email"
           placeholderTextColor="#CCC"
           value={formData.email}

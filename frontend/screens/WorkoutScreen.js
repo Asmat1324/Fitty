@@ -4,8 +4,7 @@ import {
   Text, 
   StyleSheet, 
   FlatList, 
-  ActivityIndicator, 
-  ScrollView, 
+  ActivityIndicator,  
   TouchableOpacity 
 } from "react-native";
 import { Appbar, Button } from "react-native-paper";
@@ -43,30 +42,38 @@ const WorkoutScreen = ({ navigation }) => {
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
         <Text style={styles.buttonText}>Fetch Exercises</Text>
       </TouchableOpacity>
 
-      {loading && <ActivityIndicator size="large" color="#6200EE" />}
+      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
 
+  return (
+    <View style={styles.container}>
       <FlatList
         data={exerciseData}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ExerciseCard data={item} />}
+        ListHeaderComponent={renderHeader} 
+        contentContainerStyle={styles.listContent}
       />
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#000",
+  },
+  headerContainer: {
+    padding: 20,
   },
   button: {
     backgroundColor: "#48E0E4",
@@ -85,6 +92,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     marginBottom: 10,
+  },
+  listContent: {
+    paddingBottom: 20,
   },
 });
 
