@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
+import { AuthContext } from '../utilities/authContext';
 
 export default function LoginScreen({ navigation, setIsAuthenticated }) {
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [formData, setFormData] = useState({ email: "", password: "" });
- // const [email, setEmail] = useState('');
- // const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
+  const {setUser, setToken } = useContext(AuthContext);
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }
@@ -16,32 +18,37 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
       setErrorMessage("");
 
    try{
-    const response = await fetch("http://192.168.1.70:19000/api/auth/login", {
+    const apiUrl = `${config.apiBaseUrl}/api/auth/login`; // imported variable from config.js
+    const response = await fetch(apiUrl, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
-
-    if(response.ok){
-      const data = await response.json();
-      await AsyncStorage.setItem('token', data.token);
+    
+    const responseData = await response.json(); // read once
+    
+    if (response.ok) {
+      
+      await AsyncStorage.setItem('token', responseData.token);
+      setToken(responseData.token); // store token
+      console.log("USER IS: " + response.user)
+      setUser(responseData.user);
       setIsAuthenticated(true);
+    } else {
+      setErrorMessage(responseData.msg || "Invalid credentials.");
     }
-    else {
-      const { errorMessage } = await response.json();
-      setErrorMessage(errorMessage || "Invalid credentials.");
-    }
-   }
-   catch(err){
+   }catch(err){
     setErrorMessage("An error occured. Please try again.");
+    console.error("Login error:", err);
    }
   };
 
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
       <View style={styles.card}>
-        <TextInput
+      <TextInput
           style={styles.input}
           placeholder="Email"
           name="email"
@@ -49,9 +56,12 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           value={formData.email}
           onChangeText={(text) => handleInputChange('email', text)}
         />
-        {errorMessage ? <Text style={styles.error}>Email invalid. Please try again.</Text> : null}
-        
-        <TextInput
+        {errorMessage ? <Text style={styles.error}> {errorMessage}</Text> : null}
+       {/*{errorMessage.includes('Email') || errorMessage.includes('Username') || errorMessage === "Invalid credentials." ? (
+        <Text style={styles.error}> {errorMessage}</Text>
+       ) : null}
+        */}
+         <TextInput
           style={styles.input}
           placeholder="Password"
           name="password"
@@ -60,7 +70,9 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)} 
         />
-        {errorMessage ? <Text style={styles.error}>Password invalid. Please try again.</Text> : null}
+        {/*{errorMessage.includes('Password') || errorMessage === "Invalid credentials." ? (
+          <Text style={styles.error}>{errorMessage}</Text>
+          ) : null} */}
         <TouchableOpacity>
           <Text style={styles.forgotPassword}>Forgot password</Text>
         </TouchableOpacity>
@@ -68,8 +80,6 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>LOG IN</Text>
         </TouchableOpacity>
-
-        
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
           <Text style={styles.buttonText}>SIGN UP</Text>

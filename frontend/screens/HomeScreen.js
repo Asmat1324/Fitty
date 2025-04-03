@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet } from 'react-native';
+import React, {useContext} from 'react';
+import { View, FlatList, Image, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import { Card, Paragraph } from 'react-native-paper';
-
+import { AuthContext } from '../utilities/authContext';
+import config from '../config';
 const mockPosts = [
   {
     id: '1',
@@ -28,8 +29,16 @@ const mockPosts = [
     comments: 15,
   },
 ];
+const handleUpload = async (e) => {
 
+}
 const HomeScreen = () => {
+  const { user } = useContext(AuthContext);
+  const apiUrl = `${config.apiBaseUrl}`
+  if (user) {
+   console.log(`http://localhost:19000/uploads/${user.profilePicture}`);
+  }
+
   const renderPost = ({ item }) => (
     <Card style={styles.card}>
       <Card.Content>
@@ -46,12 +55,15 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
+       <Image source={{ uri: `${apiUrl}/uploads/${user.profilePicture}` }} style={styles.profPicImage} />
+        <Text style={styles.buttonText}>Welcome, <Text>{user.firstname}</Text> <Text>{user.lastname}</Text></Text>
+        <TouchableOpacity onPress={handleUpload} style={styles.plusButton}><Text style={styles.plusText}> + </Text></TouchableOpacity>
+        <FlatList
         data={mockPosts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.feed}
-      />
+      /> 
     </View>
   );
 };
@@ -62,6 +74,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     paddingTop: 20,
     paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   feed: {
     paddingBottom: 20,
@@ -104,6 +118,35 @@ const styles = StyleSheet.create({
   comments: {
     fontSize: 14,
     color: '#888',
+  },
+  profPicImage: {
+    width: 100, 
+    height: 100,
+    backgroundColor: '#A999',
+    borderWidth: 2,
+    borderColor: "#fff",
+    borderRadius: 50,  
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusButton: {
+    backgroundColor: '#AAA',
+    borderRadius: 30,
+    padding: 5,
+    position: 'absolute',
+    paddingTop: -5,
+    right: 10,
+    top: 100
+  },
+  plusText: {
+    fontSize: 24,
+    color: '#fff'
   },
 });
 

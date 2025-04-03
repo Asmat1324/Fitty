@@ -3,50 +3,85 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
+import * as FileSystem from 'expo-file-system';
+ import config from '../config';
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation}) {
-  const [formData, setFormData] = useState({
-     username: "",
-     email: "",
-     password: "" });
   const [image, setImage] = useState(null);
+  const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
+    username: '',
+    email: '',
+    password: ''
+  });
   const [errorMessage, setErrorMessage] = useState('');
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
+ 
+  // SIGNUP HANDLING
   const handleSignup = async (e) => {
-      e.preventDefault();
+      
       setErrorMessage(""); 
    try{
-    const response = await fetch("http://192.168.1.70:19000/api/auth/register", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(formData),
+   const form = new FormData();
+   if (image) {
+    form.append('profilePicture', {
+      uri: image,
+      type: 'image/jpeg', // or your image MIME type
+      name: 'profilePic.jpg',
     });
+  }
+   form.append('firstname', formData.firstname);
+   form.append('lastname', formData.lastname);
+   form.append('username', formData.username);
+   form.append('email', formData.email);
+   form.append('password', formData.password);
+   
 
+    const apiUrl = `${config.apiBaseUrl}/api/auth/register`;
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      body:  form,
+    });
+    const responseData = await response.json();
     if(response.ok){
-      const data = await response.json();
+      //const data = await response.json();
       navigation.navigate('Login')
     }
     else {
       const { errorMessage } = await response.json();
-      setErrorMessage(errorMessage || "Invalid credentials.");
+      //setErrorMessage(errorMessage || "Invalid credentials.");
+      setErrorMessage(responseData.msg || "Registration failed.");
     }
    }
    catch(err){
     setErrorMessage("An error occured. Please try again.");
+    console.error("Signup error:", err);
    }
   };
-  const openCamera = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("You've refused to allow this app to access your cam.");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync();
-    if (!result.cancelled) {
+
+
+
+//If user chooses to take a photo using camera
+const openCamera = async () => {
+  const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+  if (permissionResult.granted === false) {
+    alert("You've refused to allow this app to access your cam.");
+    return;
+  }
+  let result = await ImagePicker.launchCameraAsync({
+    //mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [4,3],
+    quality: 1,
+  });
+  if (!result.cancelled && result.assets && result.assets.length > 0) {
     setImage(result.assets[0].uri);
-    }
-  };
+  }
+};
+
+  //If user chooses to use image from camera roll
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -59,13 +94,11 @@ export default function SignupScreen({ navigation}) {
       allowsEditing: true,
       aspect: [4,3],
       quality: 1,
-    });
-    console.log(result.uri);
-    if (!result.cancelled) {
-      setImage(result.assets[0].uri);
-      console.log('Image URI:', result.assets[0].uri);
-    }};   
 
+    });
+    if (!result.cancelled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri)
+    }};   
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Get <Text style={styles.highlight}>Fitty</Text></Text>
@@ -248,4 +281,3 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
