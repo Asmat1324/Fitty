@@ -4,29 +4,43 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import Post from '../models/post.js'
+import AWS from 'aws-sdk';
 import multer from 'multer';
+import multerS3 from 'multer-s3';
 import path from 'path';
-
-
+dotenv.config();
 
 const router = express.Router();
 
-//configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, 'backend/uploads'); // folder to save uploaded files
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION
+});
+
+const s3 = new AWS.S3();
+
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.AWS_BUCKET_NAME,
+    key: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
       cb(null, file.fieldname + '-' + uniqueSuffix + ext);
     }
-  });
-  
-const upload = multer({ storage });
-//@route POST /register
-//@desc Register a new user
-//@access Public
+  })
+});
+
+async function generatePresignedUrl(bucket, key, expiresIn = 60) {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+    Expires: expiresIn
+  };
+  return s3.getSignedUrlPromise('getObject', params);
+}
+
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
   const { firstname, lastname, username, email, password } = req.body;
 
@@ -67,7 +81,6 @@ router.get('/profile-picture/:key', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate presigned URL' });
   }
 });
-
 //@route POST /login
 //@desc Authenticate user & get token
 //@access Public
@@ -144,4 +157,4 @@ if (!userDoc) {
     }
 });
 
-export default router;
+export default router; 
