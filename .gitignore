@@ -36,3 +36,5 @@ config.js
 
 expo-env.d.ts
 # @end expo-cli
+backend/s3Use.js
+backend/awsS3connect.js

@@ -4,64 +4,106 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import Post from '../models/post.js'
+import AWS from 'aws-sdk';
 import multer from 'multer';
+import multerS3 from 'multer-s3';
 import path from 'path';
 
-
+const s3 = new AWS.S3({
+    region: process.env.AWS_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  });
 
 const router = express.Router();
 
+
 //configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, 'backend/uploads'); // folder to save uploaded files
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-    }
-  });
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//       cb(null, 'backend/uploads'); // folder to save uploaded files
+//     },
+//     filename: (req, file, cb) => {
+//       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+//       const ext = path.extname(file.originalname);
+//       cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+//     }
+//   });
   
-const upload = multer({ storage });
+const upload = multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: 'fittyimages',      // or process.env.AWS_S3_BUCKET if you prefer
+     // acl: 'public-read',         // makes the file publicly readable
+      key: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+      }
+    })
+  });
+
+  async function generatePresignedUrl(bucket, key, expiresIn = 60) {
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Expires: expiresIn // in seconds
+    };
+    return s3.getSignedUrlPromise('getObject', params);
+  }
+
 //@route POST /register
 //@desc Register a new user
 //@access Public
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
-
-  console.log('Received file:', req.file);
+    console.log('Received file:', req.file);
+  
+    // The rest of your data from the request body
     const { firstname, lastname, username, email, password } = req.body;
- // const profilePicture = req.file ? 'backend/uploads/profile_pictures/${req.file.filename}' : '';
-
+  
     try {
-        let userByEmail = await User.findOne({ email });
-        if (userByEmail) {
-            return res.status(400).json({ msg: 'Email already exists' });
-        }
-        let userByUsername = await User.findOne({ username });
-        if (userByUsername) {
-            return res.status(400).json({ msg: 'Username already exists' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
-
-       const newUser = new User({
-            firstname,
-            lastname,
-            username,
-            email,
-            password: passwordHash,
-            profilePicture:  req.file ? req.file.filename : '',
-        });
-
-        await newUser.save();
-        res.status(201).json({ msg: 'User registered successfully' });
+      // 1) Check if user with same email or username exists
+      let userByEmail = await User.findOne({ email });
+      if (userByEmail) {
+        return res.status(400).json({ msg: 'Email already exists' });
+      }
+      let userByUsername = await User.findOne({ username });
+      if (userByUsername) {
+        return res.status(400).json({ msg: 'Username already exists' });
+      }
+  
+      // 2) Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+  
+      // 3) Prepare user document
+      // If req.file is defined, store either the location (full URL) or the key
+      let profilePicUrl = '';
+      if (req.file) {
+        // for S3 public read
+        profilePicUrl = req.file.location;  // full S3 url
+        // or if you want just the key => req.file.key;
+      }
+  
+      const newUser = new User({
+        firstname,
+        lastname,
+        username,
+        email,
+        password: passwordHash,
+        profilePicture: profilePicUrl
+      });
+  
+      // 4) Save new user
+      await newUser.save();
+      res.status(201).json({ msg: 'User registered successfully' });
+  
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+      console.error(err.message);
+      res.status(500).send('Server error');
     }
-});
+  });
+  
 
 
 //@route POST /login
