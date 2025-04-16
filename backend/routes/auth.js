@@ -4,33 +4,28 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import Post from '../models/post.js'
-import AWS from 'aws-sdk';
+import fs from 'fs';
 import multer from 'multer';
-import multerS3 from 'multer-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import path from 'path';
+import dotenv from 'dotenv';
 dotenv.config();
 
 const router = express.Router();
 
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
+
+// AWS v3 S3 client
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
 });
 
-const s3 = new AWS.S3();
-
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.AWS_BUCKET_NAME,
-    key: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-    }
-  })
-});
+// Multer disk storage (we'll manually upload to S3 after)
+const upload = multer({ dest: 'tempUploads/' });
 
 async function generatePresignedUrl(bucket, key, expiresIn = 60) {
   const params = {
@@ -54,27 +49,54 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    let profilePicKey = '';
+
+    if (req.file) {
+      const ext = path.extname(req.file.originalname);
+      const key = `profilePicture-${Date.now()}${ext}`;
+
+      const fileStream = fs.createReadStream(req.file.path);
+
+      await s3.send(new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        Body: fileStream,
+        ContentType: req.file.mimetype,
+      }));
+
+      // cleanup temp file
+      fs.unlink(req.file.path, () => {});
+      profilePicKey = key;
+    }
+
     const newUser = new User({
       firstname,
       lastname,
       username,
       email,
       password: passwordHash,
-      profilePicture: req.file?.key || ''
+      profilePicture: profilePicKey
     });
 
     await newUser.save();
     res.status(201).json({ msg: 'User registered successfully' });
+
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('🔥 REGISTER ERROR:', err); // log the full error object
+    res.status(500).json({ msg: 'Server error', error: err.message || 'Unknown error' });
   }
 });
 
 router.get('/profile-picture/:key', async (req, res) => {
   const { key } = req.params;
+
   try {
-    const url = await generatePresignedUrl(process.env.AWS_BUCKET_NAME, key);
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 60 });
     res.json({ url });
   } catch (err) {
     console.error(err);

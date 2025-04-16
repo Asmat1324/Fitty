@@ -4,11 +4,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 //Screens
 import TrackerScreen from './TrackerScreen';
-import WorkoutTrackerScreen from './WorkoutTrackerScreen';
+import MealScreen from './MealScreen';
 
 
 const calorieTracker = 'Meal Tracker';
-const workoutTracker = 'Workout Tracker';
+const mealGenerator = 'Meal Generator';
 //Creating top tab navigator
 const Tab = createMaterialTopTabNavigator();
 const Stack = createStackNavigator();
@@ -39,8 +39,8 @@ const TrackerContainer = () => {
    
        
          <Tab.Navigator>
+          <Tab.Screen name="Meal Generator" component={MealScreen} />
          <Tab.Screen name="Meal Tracker" component={TrackerScreen} />
-         <Tab.Screen name="Workout Tracker" component={WorkoutTrackerScreen} />
          </Tab.Navigator>
    
   

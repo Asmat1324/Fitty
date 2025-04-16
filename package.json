@@ -10,14 +10,18 @@
     "test": "mocha backend/tests/**/*.test.js --exit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.787.0",
+    "@aws-sdk/s3-request-presigner": "^3.787.0",
     "@babel/plugin-transform-class-properties": "^7.25.9",
     "@babel/plugin-transform-nullish-coalescing-operator": "^7.26.6",
     "@babel/plugin-transform-optional-chaining": "^7.25.9",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/material-top-tabs": "^7.2.8",
     "@react-navigation/native": "^7.1.4",
+    "axios": "^1.8.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "expo": "^52.0.37",
     "expo-file-system": "~18.0.12",
     "expo-image-picker": "~16.0.6",

@@ -1,8 +1,9 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 import { View, FlatList, Image, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import { Card, Paragraph } from 'react-native-paper';
 import { AuthContext } from '../utilities/authContext';
 import config from '../config';
+import axios from 'axios';
 const mockPosts = [
   {
     id: '1',
@@ -29,12 +30,17 @@ const mockPosts = [
     comments: 15,
   },
 ];
+
 const handleUpload = async (e) => {
 
 }
 const HomeScreen = () => {
   const { user } = useContext(AuthContext);
+  const [profileImage, setProfileImage] = useState(null);
   const apiUrl = `${config.apiBaseUrl}`
+  axios.get(`${config.apiBaseUrl}/api/auth/profile-picture/${user.profilePicture}`).then(res => {
+    setProfileImage(res.data.url);
+  });
   if (user) {
    console.log(`http://localhost:19000/uploads/${user.profilePicture}`);
   }
@@ -55,7 +61,7 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-       <Image source={{ uri: `${apiUrl}/uploads/${user.profilePicture}` }} style={styles.profPicImage} />
+       <Image source={{ uri: profileImage }} style={styles.profPicImage} />
         <Text style={styles.buttonText}>Welcome, <Text>{user.firstname}</Text> <Text>{user.lastname}</Text></Text>
         <TouchableOpacity onPress={handleUpload} style={styles.plusButton}><Text style={styles.plusText}> + </Text></TouchableOpacity>
         <FlatList

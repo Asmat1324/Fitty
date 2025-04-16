@@ -20,46 +20,57 @@ export default function SignupScreen({ navigation}) {
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
  
   // SIGNUP HANDLING
-  const handleSignup = async (e) => {
-      
-      setErrorMessage(""); 
-   try{
-   const form = new FormData();
-   if (image) {
-    form.append('profilePicture', {
-      uri: image,
-      type: 'image/jpeg', // or your image MIME type
-      name: 'profilePic.jpg',
-    });
-  }
-   form.append('firstname', formData.firstname);
-   form.append('lastname', formData.lastname);
-   form.append('username', formData.username);
-   form.append('email', formData.email);
-   form.append('password', formData.password);
-   
-
-    const apiUrl = `${config.apiBaseUrl}/api/auth/register`;
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      body:  form,
-    });
-    const responseData = await response.json();
-    if(response.ok){
-      //const data = await response.json();
-      navigation.navigate('Login')
+  const handleSignup = async () => {
+    setErrorMessage(""); 
+  
+    try {
+      const form = new FormData();
+      if (image) {
+        form.append('profilePicture', {
+          uri: image,
+          type: 'image/jpeg',
+          name: 'profilePic.jpg',
+        });
+      }
+  
+      form.append('firstname', formData.firstname);
+      form.append('lastname', formData.lastname);
+      form.append('username', formData.username);
+      form.append('email', formData.email);
+      form.append('password', formData.password);
+  
+      const apiUrl = `${config.apiBaseUrl}/api/auth/register`;
+  
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        body: form,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+  
+      const rawText = await response.text();
+  
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (err) {
+        console.error('❌ Server returned non-JSON:', rawText);
+        throw new Error(rawText); // this could be 'Server error' or full HTML
+      }
+  
+      if (response.ok) {
+        navigation.navigate('Login');
+      } else {
+        setErrorMessage(data.msg || "Registration failed.");
+      }
+  
+    } catch (err) {
+      console.error("Signup error:", err);
+      setErrorMessage(err.message || "An error occurred. Please try again.");
     }
-    else {
-      const { errorMessage } = await response.json();
-      //setErrorMessage(errorMessage || "Invalid credentials.");
-      setErrorMessage(responseData.msg || "Registration failed.");
-    }
-   }
-   catch(err){
-    setErrorMessage("An error occured. Please try again.");
-    console.error("Signup error:", err);
-   }
   };
+  
 
 
 

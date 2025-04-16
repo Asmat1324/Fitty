@@ -9,19 +9,18 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Screens
 import HomeScreen from './screens/HomeScreen';
-import TrackerScreen from './screens/TrackerScreen';
+import ExerciseContainer from './screens/ExerciseContainer';
 import TrackerContainer from './screens/TrackerContainer';
 import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
-import WorkoutScreen from './screens/WorkoutScreen';
 import NotificationScreen from './screens/NotificationScreen'
 // Screen Names
 const homeName = 'Fitty Stream';
-const trackerName = 'Tracker';
-const notificationName = 'Notifications';
+const trackerName = 'Diet';
+const notificationName = 'Social';
 const settingsName = 'Settings';
-const workoutName = 'Workouts';
+const workoutName = 'Exercise';
 // Create Navigators
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -52,7 +51,7 @@ const MainTabs = () => (
     })}
   >
     <Tab.Screen name={homeName} component={HomeScreen} />
-    <Tab.Screen name={workoutName} component={WorkoutScreen} />
+    <Tab.Screen name={workoutName} component={ExerciseContainer} />
     <Tab.Screen name={trackerName} component={TrackerContainer} />
     <Tab.Screen name={notificationName} component={NotificationScreen} />
     <Tab.Screen name={settingsName} component={SettingsScreen} />
