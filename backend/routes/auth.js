@@ -28,41 +28,45 @@ const upload = multer({ storage });
 //@desc Register a new user
 //@access Public
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
+  const { firstname, lastname, username, email, password } = req.body;
 
-  console.log('Received file:', req.file);
-    const { firstname, lastname, username, email, password } = req.body;
- // const profilePicture = req.file ? 'backend/uploads/profile_pictures/${req.file.filename}' : '';
-
-    try {
-        let userByEmail = await User.findOne({ email });
-        if (userByEmail) {
-            return res.status(400).json({ msg: 'Email already exists' });
-        }
-        let userByUsername = await User.findOne({ username });
-        if (userByUsername) {
-            return res.status(400).json({ msg: 'Username already exists' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
-
-       const newUser = new User({
-            firstname,
-            lastname,
-            username,
-            email,
-            password: passwordHash,
-            profilePicture:  req.file ? req.file.filename : '',
-        });
-
-        await newUser.save();
-        res.status(201).json({ msg: 'User registered successfully' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+  try {
+    const existingEmail = await User.findOne({ email });
+    const existingUsername = await User.findOne({ username });
+    if (existingEmail || existingUsername) {
+      return res.status(400).json({ msg: 'Email or Username already exists' });
     }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      firstname,
+      lastname,
+      username,
+      email,
+      password: passwordHash,
+      profilePicture: req.file?.key || ''
+    });
+
+    await newUser.save();
+    res.status(201).json({ msg: 'User registered successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
 });
 
+router.get('/profile-picture/:key', async (req, res) => {
+  const { key } = req.params;
+  try {
+    const url = await generatePresignedUrl(process.env.AWS_BUCKET_NAME, key);
+    res.json({ url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate presigned URL' });
+  }
+});
 
 //@route POST /login
 //@desc Authenticate user & get token
