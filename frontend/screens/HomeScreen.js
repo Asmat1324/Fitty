@@ -78,7 +78,7 @@ const HomeScreen = () => {
       quality: 1,
     });
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
     }
   };
@@ -99,22 +99,26 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: profileImage }} style={styles.profPicImage} />
-      <Text style={styles.buttonText}>
-        Welcome, <Text>{user?.firstname}</Text> <Text>{user?.lastname}</Text>
-      </Text>
-
-      <TouchableOpacity onPress={handleUpload} style={styles.plusButton}>
-        <Text style={styles.plusText}> + </Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <Image source={{ uri: profileImage }} style={styles.profPicImage} />
+        <Text style={styles.welcomeText}>
+          Welcome, {user?.firstname} {user?.lastname}
+        </Text>
+      </View>
 
       <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.feed}
+        showsVerticalScrollIndicator={false}
       />
 
+      <TouchableOpacity onPress={handleUpload} style={styles.fab}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      {/* Modal for New Post */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -123,11 +127,11 @@ const HomeScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New Post</Text>
+            <Text style={styles.modalTitle}>Create Post</Text>
 
             <TouchableOpacity onPress={pickImage} style={styles.pickImageBtn}>
               <Text style={styles.pickImageText}>
-                {selectedImage ? 'Change Image' : 'Pick an Image'}
+                {selectedImage ? 'Change Image' : 'Choose Image'}
               </Text>
             </TouchableOpacity>
 
@@ -165,26 +169,46 @@ const HomeScreen = () => {
   );
 };
 
-export const getStyles = (theme) =>
+const getStyles = (theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: 20,
-      paddingHorizontal: 10,
+    },
+    header: {
       alignItems: 'center',
-      justifyContent: 'center',
+      paddingTop: 30,
+      paddingBottom: 10,
+    },
+    profPicImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      borderWidth: 2,
+      borderColor: theme.text,
+      backgroundColor: '#A999',
+    },
+    welcomeText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.text,
+      marginTop: 10,
     },
     feed: {
-      paddingBottom: 20,
+      paddingHorizontal: 16,
+      paddingBottom: 80,
     },
     card: {
-      marginBottom: 20,
-      borderRadius: 12,
+      marginBottom: 16,
+      borderRadius: 16,
       overflow: 'hidden',
       backgroundColor: theme.background,
       borderWidth: 1,
       borderColor: theme.text,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 5,
     },
     username: {
       fontWeight: 'bold',
@@ -194,19 +218,18 @@ export const getStyles = (theme) =>
     },
     image: {
       width: '100%',
-      height: 300,
-      borderRadius: 10,
+      height: 250,
+      borderRadius: 12,
     },
     caption: {
       marginTop: 10,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.text,
     },
     actions: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingVertical: 10,
-      paddingHorizontal: 15,
+      padding: 10,
     },
     likes: {
       fontSize: 14,
@@ -217,33 +240,22 @@ export const getStyles = (theme) =>
       fontSize: 14,
       color: theme.text,
     },
-    profPicImage: {
-      width: 100,
-      height: 100,
-      backgroundColor: '#A999',
-      borderWidth: 2,
-      borderColor: theme.text,
-      borderRadius: 50,
-      marginTop: 10,
-    },
-    buttonText: {
-      color: theme.text,
-      fontSize: 16,
-      fontWeight: 'bold',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    plusButton: {
-      backgroundColor: '#AAA',
-      borderRadius: 30,
-      padding: 5,
+    fab: {
       position: 'absolute',
-      right: 10,
-      top: 100,
+      right: 20,
+      bottom: 30,
+      backgroundColor: '#48E0E4',
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 4,
     },
-    plusText: {
-      fontSize: 24,
-      color: theme.text,
+    fabText: {
+      fontSize: 32,
+      color: '#fff',
+      fontWeight: 'bold',
     },
     modalContainer: {
       flex: 1,
@@ -252,31 +264,27 @@ export const getStyles = (theme) =>
       backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-      width: '80%',
-      backgroundColor: 'white',
-      borderRadius: 12,
+      width: '85%',
+      backgroundColor: '#fff',
+      borderRadius: 16,
       padding: 20,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
       elevation: 5,
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 10,
       textAlign: 'center',
+      marginBottom: 10,
     },
     input: {
       borderWidth: 1,
       borderColor: '#ccc',
-      borderRadius: 8,
+      borderRadius: 10,
       padding: 10,
-      marginTop: 10,
-      marginBottom: 20,
       fontSize: 16,
       color: '#333',
+      marginTop: 10,
+      marginBottom: 20,
     },
     modalButtons: {
       flexDirection: 'row',
@@ -286,7 +294,7 @@ export const getStyles = (theme) =>
       flex: 1,
       backgroundColor: '#48E0E4',
       borderRadius: 8,
-      paddingVertical: 10,
+      paddingVertical: 12,
       marginHorizontal: 5,
     },
     modalButtonText: {
@@ -295,7 +303,7 @@ export const getStyles = (theme) =>
       fontWeight: 'bold',
     },
     pickImageBtn: {
-      backgroundColor: '#ddd',
+      backgroundColor: '#eee',
       padding: 10,
       borderRadius: 8,
       alignItems: 'center',
@@ -307,7 +315,7 @@ export const getStyles = (theme) =>
     previewImage: {
       width: '100%',
       height: 200,
-      borderRadius: 10,
+      borderRadius: 12,
       marginTop: 10,
       marginBottom: 10,
     },
