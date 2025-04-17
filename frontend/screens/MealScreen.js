@@ -63,29 +63,14 @@ const MealScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.select}
         onPress={() => setDropdownVisible(!dropdownVisible)}
       >
         <Text style={styles.selectText}>{bodyPart.toUpperCase()}</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      {dropdownVisible && (
-        <View style={styles.dropdown}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={styles.dropdownItem}
-              onPress={() => {
-                setBodyPart(category);
-                setDropdownVisible(false);
-              }}
-            >
-              <Text style={styles.dropdownText}>{category}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      
 
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
         <Text style={styles.buttonText}>Fetch Meals</Text>

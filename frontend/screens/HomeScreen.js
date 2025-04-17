@@ -195,6 +195,7 @@ export const getStyles = (theme) =>
       flex: 1,
       backgroundColor: theme.background,
       paddingTop: 50,
+      
       paddingHorizontal: 16,
     },
     profPicImage: {
@@ -202,12 +203,14 @@ export const getStyles = (theme) =>
       height: 70,
       backgroundColor: '#A999',
       borderWidth: 2,
+      alignSelf: 'center',
       borderColor: theme.text,
       borderRadius: 35,
       marginBottom: 10,
     },
     buttonText: {
       color: theme.text,
+      alignSelf: 'center',
       fontSize: 18,
       fontWeight: 'bold',
       marginBottom: 20,
@@ -233,8 +236,10 @@ export const getStyles = (theme) =>
       paddingBottom: 100,
     },
     card: {
+      alignSelf: 'center',
       marginBottom: 20,
       borderRadius: 16,
+      width: '90%',
       backgroundColor: theme.card || '#fff',
       overflow: 'hidden',
       shadowColor: '#000',
