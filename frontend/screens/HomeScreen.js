@@ -15,6 +15,7 @@ import { AuthContext } from '../utilities/authContext';
 import config from '../config';
 import axios from 'axios';
 import { useTheme } from '../utilities/ThemeContext';
+import { FontAwesome } from '@expo/vector-icons';
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -30,6 +31,7 @@ const HomeScreen = () => {
       caption: 'Cheat meal!!',
       likes: 120,
       comments: 5,
+      liked: false,
     },
   ]);
 
@@ -53,11 +55,12 @@ const HomeScreen = () => {
 
     const newPost = {
       id: Date.now().toString(),
-      username: user?.username?.toLowerCase() || 'you',
+      username: user?.firstname?.toLowerCase() || 'you',
       imageUri: { uri: selectedImage },
       caption: newCaption,
       likes: 0,
       comments: 0,
+      liked: false,
     };
 
     setPosts([newPost, ...posts]);
@@ -78,9 +81,23 @@ const HomeScreen = () => {
       quality: 1,
     });
 
-    if (!result.canceled) {
+    if (!result.cancelled) {
       setSelectedImage(result.assets[0].uri);
     }
+  };
+
+  const handleLike = (postId) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              liked: !post.liked,
+              likes: post.liked ? post.likes - 1 : post.likes + 1,
+            }
+          : post
+      )
+    );
   };
 
   const renderPost = ({ item }) => (
@@ -91,7 +108,14 @@ const HomeScreen = () => {
         <Paragraph style={styles.caption}>{item.caption}</Paragraph>
       </Card.Content>
       <Card.Actions style={styles.actions}>
-        <Text style={styles.likes}>{item.likes} Likes</Text>
+        <TouchableOpacity onPress={() => handleLike(item.id)} style={styles.likeBtn}>
+          <FontAwesome
+            name={item.liked ? 'heart' : 'heart-o'}
+            size={20}
+            color={item.liked ? '#ff5a5f' : '#888'}
+          />
+          <Text style={styles.likes}>{item.likes}</Text>
+        </TouchableOpacity>
         <Text style={styles.comments}>{item.comments} Comments</Text>
       </Card.Actions>
     </Card>
@@ -99,26 +123,22 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={{ uri: profileImage }} style={styles.profPicImage} />
-        <Text style={styles.welcomeText}>
-          Welcome, {user?.firstname} {user?.lastname}
-        </Text>
-      </View>
+      <Image source={{ uri: profileImage }} style={styles.profPicImage} />
+      <Text style={styles.buttonText}>
+        Welcome, <Text>{user?.firstname}</Text> <Text>{user?.lastname}</Text>
+      </Text>
+
+      <TouchableOpacity onPress={handleUpload} style={styles.plusButton}>
+        <Text style={styles.plusText}> + </Text>
+      </TouchableOpacity>
 
       <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.feed}
-        showsVerticalScrollIndicator={false}
       />
 
-      <TouchableOpacity onPress={handleUpload} style={styles.fab}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-
-      {/* Modal for New Post */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -127,11 +147,11 @@ const HomeScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Post</Text>
+            <Text style={styles.modalTitle}>Create New Post</Text>
 
             <TouchableOpacity onPress={pickImage} style={styles.pickImageBtn}>
               <Text style={styles.pickImageText}>
-                {selectedImage ? 'Change Image' : 'Choose Image'}
+                {selectedImage ? 'Change Image' : 'Pick an Image'}
               </Text>
             </TouchableOpacity>
 
@@ -169,93 +189,99 @@ const HomeScreen = () => {
   );
 };
 
-const getStyles = (theme) =>
+export const getStyles = (theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
-    },
-    header: {
-      alignItems: 'center',
-      paddingTop: 30,
-      paddingBottom: 10,
+      paddingTop: 50,
+      paddingHorizontal: 16,
     },
     profPicImage: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: 70,
+      height: 70,
+      backgroundColor: '#A999',
       borderWidth: 2,
       borderColor: theme.text,
-      backgroundColor: '#A999',
+      borderRadius: 35,
+      marginBottom: 10,
     },
-    welcomeText: {
-      fontSize: 18,
-      fontWeight: '600',
+    buttonText: {
       color: theme.text,
-      marginTop: 10,
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 20,
+    },
+    plusButton: {
+      backgroundColor: '#48E0E4',
+      borderRadius: 30,
+      width: 50,
+      height: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      right: 20,
+      bottom: 30,
+      zIndex: 10,
+      elevation: 5,
+    },
+    plusText: {
+      fontSize: 28,
+      color: '#fff',
     },
     feed: {
-      paddingHorizontal: 16,
-      paddingBottom: 80,
+      paddingBottom: 100,
     },
     card: {
-      marginBottom: 16,
+      marginBottom: 20,
       borderRadius: 16,
+      backgroundColor: theme.card || '#fff',
       overflow: 'hidden',
-      backgroundColor: theme.background,
-      borderWidth: 1,
-      borderColor: theme.text,
-      elevation: 3,
       shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
-      shadowRadius: 5,
+      shadowRadius: 8,
+      elevation: 3,
     },
     username: {
       fontWeight: 'bold',
       fontSize: 16,
       color: theme.text,
-      marginBottom: 10,
+      marginBottom: 6,
     },
     image: {
       width: '100%',
-      height: 250,
-      borderRadius: 12,
+      height: 300,
+      borderRadius: 10,
+      marginTop: 10,
     },
     caption: {
       marginTop: 10,
-      fontSize: 15,
+      fontSize: 14,
       color: theme.text,
     },
     actions: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      padding: 10,
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+      borderTopWidth: 1,
+      borderColor: '#eee',
+    },
+    likeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     likes: {
       fontSize: 14,
       fontWeight: 'bold',
-      color: '#48E0E4',
+      color: theme.text,
     },
     comments: {
       fontSize: 14,
       color: theme.text,
-    },
-    fab: {
-      position: 'absolute',
-      right: 20,
-      bottom: 30,
-      backgroundColor: '#48E0E4',
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 4,
-    },
-    fabText: {
-      fontSize: 32,
-      color: '#fff',
-      fontWeight: 'bold',
     },
     modalContainer: {
       flex: 1,
@@ -264,37 +290,37 @@ const getStyles = (theme) =>
       backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-      width: '85%',
-      backgroundColor: '#fff',
+      width: '90%',
+      backgroundColor: 'white',
       borderRadius: 16,
       padding: 20,
-      elevation: 5,
     },
     modalTitle: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: 'bold',
-      textAlign: 'center',
       marginBottom: 10,
+      textAlign: 'center',
     },
     input: {
       borderWidth: 1,
       borderColor: '#ccc',
-      borderRadius: 10,
+      borderRadius: 8,
       padding: 10,
-      fontSize: 16,
-      color: '#333',
       marginTop: 10,
       marginBottom: 20,
+      fontSize: 16,
+      color: '#333',
     },
     modalButtons: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      marginTop: 10,
     },
     modalButton: {
       flex: 1,
       backgroundColor: '#48E0E4',
       borderRadius: 8,
-      paddingVertical: 12,
+      paddingVertical: 10,
       marginHorizontal: 5,
     },
     modalButtonText: {
@@ -303,10 +329,11 @@ const getStyles = (theme) =>
       fontWeight: 'bold',
     },
     pickImageBtn: {
-      backgroundColor: '#eee',
+      backgroundColor: '#ddd',
       padding: 10,
       borderRadius: 8,
       alignItems: 'center',
+      marginTop: 10,
     },
     pickImageText: {
       fontWeight: 'bold',
@@ -315,7 +342,7 @@ const getStyles = (theme) =>
     previewImage: {
       width: '100%',
       height: 200,
-      borderRadius: 12,
+      borderRadius: 10,
       marginTop: 10,
       marginBottom: 10,
     },
