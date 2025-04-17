@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
+import {useTheme} from '../utilities/ThemeContext';
+
 const WorkoutScreen = ({ navigation }) => {
   const [bodyPart, setBodyPart] = useState("back");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [exerciseData, setExerciseData] = useState([]);
-
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   const categories = [
     "back",
     "cardio",
@@ -60,7 +63,6 @@ const WorkoutScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Custom Select */}
       <TouchableOpacity
         style={styles.select}
         onPress={() => setDropdownVisible(!dropdownVisible)}
@@ -99,20 +101,22 @@ const WorkoutScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: theme.background,
     padding: 20,
   },
   select: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.background,
+    borderColor: theme.text,
     padding: 12,
     borderRadius: 8,
+    borderWidth: 1,
   },
   selectText: {
     fontSize: 16,
-    color: "#000",
+    color: theme.text,
   },
   dropdown: {
     backgroundColor: "#fff",
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   button: {
-    backgroundColor: "#48E0E4",
+    backgroundColor: theme.buttonColor,
     borderRadius: 20,
     padding: 12,
     alignItems: "center",

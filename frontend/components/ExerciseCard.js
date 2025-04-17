@@ -1,12 +1,17 @@
 import React from 'react';
 import { Card, Title } from 'react-native-paper'; 
 import { Text, Image, View, StyleSheet } from 'react-native';
+import {useTheme} from '../utilities/ThemeContext';
+
+ 
 function capitalizeFirstLetter(string) {
   if (!string) return string; // handle undefined or null input
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
 const ExerciseCard = ({ data }) => {
-  
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   return (
     <Card style={styles.card}>
       <Card.Content>
@@ -30,7 +35,7 @@ const ExerciseCard = ({ data }) => {
         </Text>
         <Text style={styles.paragraph}>Instructions:</Text>
         {data.instructions?.map((step, index) => (
-        <Text key={index}>
+        <Text key={index} style={styles.paragraph}>
          • {step}
         </Text>
         ))}  
@@ -40,12 +45,14 @@ const ExerciseCard = ({ data }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   card: {
     marginBottom: 20,
     padding: 10,
     borderRadius: 10,
-    backgroundColor: '#fff',
+    borderColor: theme.text,
+    borderWidth: 1,
+    backgroundColor: theme.background,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -57,7 +64,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
-    color: '#333',
+    color: theme.text,
   },
   imageContainer: {
     alignItems: 'center',
@@ -71,23 +78,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#444',
+    color: theme.text,
     marginTop: 5,
   },
   value: {
     fontSize: 16,
     fontWeight: 'normal',
-    color: '#666',
+    color: theme.text,
   },
   paragraph: {
     marginTop: 10,
     fontSize: 14,
-    color: '#555',
+    color: theme.text,
     textAlign: 'center',
   },
   instruction: {
     fontSize: 14,
-    color: '#555',
+    color: theme.text,
     marginLeft: 10,
   },
 });

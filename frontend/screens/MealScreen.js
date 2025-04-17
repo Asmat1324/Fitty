@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
+import {useTheme} from '../utilities/ThemeContext';
+
 const MealScreen = ({ navigation }) => {
   const [bodyPart, setBodyPart] = useState("back");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [exerciseData, setExerciseData] = useState([]);
-
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   const categories = [
     "back",
     "cardio",
@@ -85,7 +88,7 @@ const MealScreen = ({ navigation }) => {
       )}
 
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
-        <Text style={styles.buttonText}>Fetch Exercises</Text>
+        <Text style={styles.buttonText}>Fetch Meals</Text>
       </TouchableOpacity>
       <FlatList
         data={exerciseData}
@@ -98,53 +101,55 @@ const MealScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-    padding: 20,
-  },
-  select: {
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-  },
-  selectText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  dropdown: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginTop: 5,
-  },
-  dropdownItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  button: {
-    backgroundColor: "#48E0E4",
-    borderRadius: 20,
-    padding: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "#FF4D4D",
-    textAlign: "center",
-    fontSize: 12,
-    marginTop: 10,
-  },
-});
+const getStyles = (theme) => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      padding: 20,
+    },
+    select: {
+      backgroundColor: theme.background,
+      borderColor: theme.text,
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+    },
+    selectText: {
+      fontSize: 16,
+      color: theme.text,
+    },
+    dropdown: {
+      backgroundColor: "#fff",
+      borderRadius: 8,
+      marginTop: 5,
+    },
+    dropdownItem: {
+      padding: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: "#ccc",
+    },
+    dropdownText: {
+      fontSize: 16,
+      color: "#000",
+    },
+    button: {
+      backgroundColor: theme.buttonColor,
+      borderRadius: 20,
+      padding: 12,
+      alignItems: "center",
+      marginTop: 20,
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    errorText: {
+      color: "#FF4D4D",
+      textAlign: "center",
+      fontSize: 12,
+      marginTop: 10,
+    },
+  });
 
 export default MealScreen;

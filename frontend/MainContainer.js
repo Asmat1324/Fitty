@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { PaperProvider } from "react-native-paper";
-
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {useTheme} from './utilities/ThemeContext'
 // Screens
 import HomeScreen from './screens/HomeScreen';
 import ExerciseContainer from './screens/ExerciseContainer';
@@ -26,7 +23,9 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 // Bottom Tab Navigator for main app
-const MainTabs = () => (
+const MainTabs = () => {
+  const {theme} = useTheme();
+  return (
   <Tab.Navigator
     initialRouteName={homeName}
     screenOptions={({ route }) => ({
@@ -47,6 +46,14 @@ const MainTabs = () => (
         }
 
         return <Ionicons name={iconName} size={size} color={color} />;
+      },tabBarActiveTintColor: theme.primary,
+      tabBarInactiveTintColor: theme.text + '88', // slightly faded
+      tabBarStyle: {
+        backgroundColor: theme.card,
+        borderTopColor: theme.border,
+        backgroundColor: theme.background,
+        borderTopColor: 'transparent',
+        backdropFilter: 'blur(10px)',
       },
     })}
   >
@@ -56,11 +63,10 @@ const MainTabs = () => (
     <Tab.Screen name={notificationName} component={NotificationScreen} />
     <Tab.Screen name={settingsName} component={SettingsScreen} />
   </Tab.Navigator>
-);
+)};
 
 const MainContainer = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   return (
     <NavigationContainer options={{ headerShown: false }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>

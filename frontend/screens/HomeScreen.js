@@ -4,6 +4,8 @@ import { Card, Paragraph } from 'react-native-paper';
 import { AuthContext } from '../utilities/authContext';
 import config from '../config';
 import axios from 'axios';
+import {useTheme} from '../utilities/ThemeContext';
+
 const mockPosts = [
   {
     id: '1',
@@ -35,9 +37,12 @@ const handleUpload = async (e) => {
 
 }
 const HomeScreen = () => {
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   const { user } = useContext(AuthContext);
   const [profileImage, setProfileImage] = useState(null);
   const apiUrl = `${config.apiBaseUrl}`
+
   axios.get(`${config.apiBaseUrl}/api/auth/profile-picture/${user.profilePicture}`).then(res => {
     setProfileImage(res.data.url);
   });
@@ -74,10 +79,10 @@ const HomeScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+export const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: theme.background,
     paddingTop: 20,
     paddingHorizontal: 10,
     alignItems: 'center',
@@ -86,62 +91,62 @@ const styles = StyleSheet.create({
   feed: {
     paddingBottom: 20,
   },
-  card: {
+card: {
     marginBottom: 20,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.background,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: theme.text,
   },
-  username: {
+username: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#fff',
+    color: theme.text,
     marginBottom: 10,
   },
-  image: {
+image: {
     width: '100%',
     height: 300,
     borderRadius: 10,
   },
-  caption: {
+caption: {
     marginTop: 10,
     fontSize: 14,
-    color: '#ddd',
+    color: theme.text,
   },
-  actions: {
+actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     paddingHorizontal: 15,
   },
-  likes: {
+likes: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#48E0E4',
   },
-  comments: {
+comments: {
     fontSize: 14,
-    color: '#888',
+    color: theme.text,
   },
-  profPicImage: {
+profPicImage: {
     width: 100, 
     height: 100,
     backgroundColor: '#A999',
     borderWidth: 2,
-    borderColor: "#fff",
+    borderColor: theme.text,
     borderRadius: 50,  
     marginTop: 10,
   },
-  buttonText: {
-    color: '#fff',
+   buttonText: {
+    color: theme.text,
     fontSize: 16,
     fontWeight: 'bold',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plusButton: {
+plusButton: {
     backgroundColor: '#AAA',
     borderRadius: 30,
     padding: 5,
@@ -152,8 +157,8 @@ const styles = StyleSheet.create({
   },
   plusText: {
     fontSize: 24,
-    color: '#fff'
+    color: theme.text
   },
-});
+})
 
 export default HomeScreen;

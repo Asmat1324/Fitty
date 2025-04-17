@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import {useTheme} from '../utilities/ThemeContext'
+
 
 export default function WorkoutTrackerScreen() {
-  
-
+  const {theme} = useTheme();
+  const styles = getStyles(theme);  
 
   return (
     <View style={[styles.container, { flex: 1 }]}>
@@ -24,17 +26,17 @@ export default function WorkoutTrackerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles =(theme)=> StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   title: {
     fontSize: 32,
-    color: '#fff',
+    color: theme.text,
     fontWeight: '600',
     marginBottom: 20,
     textAlign: 'center',
@@ -44,11 +46,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '90%',
-    backgroundColor: '#222',
+    backgroundColor: theme.background,
     padding: 25,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: theme.text,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
@@ -58,8 +60,8 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    backgroundColor: '#333',
-    color: '#fff',
+    backgroundColor: theme.inputText,
+    color: theme.text,
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
@@ -76,7 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -93,14 +95,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 8,
-    backgroundColor: '#333',
+    backgroundColor: theme.background,
   },
   foodName: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 16,
   },
   foodCalories: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 14,
     fontWeight: '300',
   },

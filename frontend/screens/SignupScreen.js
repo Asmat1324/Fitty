@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
  import config from '../config';
+import {useTheme} from '../utilities/ThemeContext'
 //import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation}) {
@@ -17,6 +18,8 @@ export default function SignupScreen({ navigation}) {
     password: ''
   });
   const [errorMessage, setErrorMessage] = useState('');
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
  
   // SIGNUP HANDLING
@@ -55,7 +58,7 @@ export default function SignupScreen({ navigation}) {
       try {
         data = JSON.parse(rawText);
       } catch (err) {
-        console.error('❌ Server returned non-JSON:', rawText);
+        console.error('Server returned non-JSON:', rawText);
         throw new Error(rawText); // this could be 'Server error' or full HTML
       }
   
@@ -119,7 +122,7 @@ const openCamera = async () => {
           style={styles.input}
           placeholder="First Name"
           name="firstname"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           value={formData.firstname}
           onChangeText={(text) => handleInputChange('firstname', text)}
         />
@@ -127,7 +130,7 @@ const openCamera = async () => {
           style={styles.input}
           placeholder="Last Name"
           name="lastname"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           value={formData.lastname}
           onChangeText={(text) => handleInputChange('lastname', text)}
         />
@@ -135,7 +138,7 @@ const openCamera = async () => {
           style={styles.input}
           placeholder="Username"
           name="username"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           value={formData.username}
           onChangeText={(text) => handleInputChange('username', text)}
         />
@@ -144,7 +147,7 @@ const openCamera = async () => {
           style={styles.input}
           placeholder="Email (Eg. Example@email.com)"
           name="email"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           value={formData.email}
           onChangeText={(text) => handleInputChange('email', text)}
         />
@@ -154,7 +157,7 @@ const openCamera = async () => {
           style={styles.input}
           placeholder="Password"
           name="password"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           secureTextEntry
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)} 
@@ -181,16 +184,16 @@ const openCamera = async () => {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: 30,
-    color: '#fff',
+    color: theme.text,
     fontWeight: 'bold',
     marginBottom: 20,
   },
@@ -199,18 +202,18 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.background,
     padding: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: theme.text,
     alignItems: 'center',  
     justifyContent: 'center',
   },
   input: {
     width: '100%',
-    backgroundColor: '#2E6F75',
-    color: '#999',
+    backgroundColor: theme.buttonColor,
+    color: theme.text,
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#2E5F73',
+    backgroundColor: theme.buttonColor,
     borderRadius: 20,
     padding: 12,
     width: '70%',  
@@ -232,19 +235,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 16,
     fontWeight: '',
     alignItems: 'center',
   },
   submitButtonText: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 25,
     fontWeight: 700,
     alignItems: 'center',
   },
   forgotPassword: {
-    color: '#fff',
+    color: theme.text,
     textAlign: 'center',
     marginTop: 10,
     textDecorationLine: 'underline',
@@ -256,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profPic: {
-    backgroundColor: '#2E6F75',
+    backgroundColor: theme.buttonColor,
     borderRadius: 50,
     padding: 10,
     width: '58%',  
@@ -276,12 +279,12 @@ const styles = StyleSheet.create({
     height: 100,
     backgroundColor: '#A999',
     borderWidth: 2,
-    borderColor: "#fff",
+    borderColor: theme.text,
     borderRadius: 50,  
     marginTop: 10,
   },
   profPicPad: {
-    backgroundColor: '#2E6F75',
+    backgroundColor: theme.buttonColor,
     borderTopLeftRadius: 60,
     borderTopRightRadius: 60,
     paddingTop: -2,

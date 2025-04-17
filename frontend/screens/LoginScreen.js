@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
 import { AuthContext } from '../utilities/authContext';
+import {useTheme} from '../utilities/ThemeContext'
 
 export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -10,6 +11,8 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const {setUser, setToken } = useContext(AuthContext);
+  const {theme} = useTheme();
+  const styles = getStyles(theme);
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }
@@ -52,7 +55,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           style={styles.input}
           placeholder="Email"
           name="email"
-          placeholderTextColor="#ccc"
+          placeholderTextColor={theme.text}
           value={formData.email}
           onChangeText={(text) => handleInputChange('email', text)}
         />
@@ -65,7 +68,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           style={styles.input}
           placeholder="Password"
           name="password"
-          placeholderTextColor="#CCC"
+          placeholderTextColor={theme.text}
           secureTextEntry
           value={formData.password}
           onChangeText={(text) => handleInputChange('password', text)} 
@@ -89,16 +92,16 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: 30,
-    color: '#fff',
+    color: theme.text,
     fontWeight: 'bold',
     marginBottom: 20,
   },
@@ -107,18 +110,18 @@ const styles = StyleSheet.create({
   },
  card: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.background,
     padding: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: theme.text,
     alignItems: 'center',  
     justifyContent: 'center',
   },
   input: {
     width: '100%',
-    backgroundColor: '#2E6F75',
-    color: '#999',
+    backgroundColor: theme.buttonColor,
+    color: theme.text,
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#2E6F75',
+    backgroundColor: theme.buttonColor,
     borderRadius: 20,
     padding: 12,
     width: '50%',  
@@ -140,12 +143,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: theme.text,
     fontSize: 16,
     fontWeight: 'bold',
   },
   forgotPassword: {
-    color: '#fff',
+    color: theme.text,
     textAlign: 'center',
     marginBottom: 5,
     textDecorationLine: 'underline',
