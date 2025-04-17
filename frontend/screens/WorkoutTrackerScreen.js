@@ -3,6 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } 
 import { useTheme } from '../utilities/ThemeContext'
 import DropDownPicker from 'react-native-dropdown-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function WorkoutTrackerScreen() {
   const { theme } = useTheme();
@@ -245,7 +248,7 @@ const getStyles = (theme) => StyleSheet.create({
   },
   buttonText: {
     color: theme.text,
-    fontSize: 18,
+    fontSize: 0.038 * width, // 4.5% of screen width
     fontWeight: 'bold',
   },
   exerciseList: {
@@ -266,12 +269,12 @@ const getStyles = (theme) => StyleSheet.create({
   },
   exerciseName: {
     color: theme.text,
-    fontSize: 20,
+    fontSize: 0.034 * width,
     fontWeight: '600',
   },
   exerciseInfo: {
     color: theme.text,
-    fontSize: 18,
+    fontSize:  0.032 * width,
     fontWeight: '800',
   },
   totals: {
@@ -294,9 +297,8 @@ const getStyles = (theme) => StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 0.048 * width,
     fontWeight: 'bold',
-    marginBottom: 10,
     textAlign: 'center',
     color: theme.text,
   },
