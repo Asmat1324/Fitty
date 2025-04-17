@@ -1,5 +1,5 @@
 import { Link } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Permissions from 'expo-permissions';
@@ -19,7 +19,7 @@ export default function SignupScreen({ navigation}) {
   });
   const [errorMessage, setErrorMessage] = useState('');
   const {theme} = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   const handleInputChange = (name, value) => {setFormData({...formData, [name]: value});}
  
   // SIGNUP HANDLING

@@ -1,4 +1,4 @@
-import React, { useState, useContext} from 'react';
+import React, { useState, useContext, useMemo} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
@@ -12,7 +12,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const [errorMessage, setErrorMessage] = useState('');
   const {setUser, setToken } = useContext(AuthContext);
   const {theme} = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }

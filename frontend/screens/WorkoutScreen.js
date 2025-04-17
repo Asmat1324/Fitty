@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo} from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ const WorkoutScreen = ({ navigation }) => {
   const [error, setError] = useState("");
   const [exerciseData, setExerciseData] = useState([]);
   const {theme} = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   const categories = [
     "back",
     "cardio",

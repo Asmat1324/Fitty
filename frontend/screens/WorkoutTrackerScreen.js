@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import {useTheme} from '../utilities/ThemeContext'
 
 
 export default function WorkoutTrackerScreen() {
   const {theme} = useTheme();
-  const styles = getStyles(theme);  
+  const styles = useMemo(() => getStyles(theme), [theme]);
 
   return (
     <View style={[styles.container, { flex: 1 }]}>

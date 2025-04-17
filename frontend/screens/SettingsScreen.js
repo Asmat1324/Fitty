@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { List } from 'react-native-paper';
-import { useTheme } from '../utilities/ThemeContext';
+import { useTheme} from '../utilities/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
   const { theme, toggleTheme, mode } = useTheme();
   const darkMode = mode === 'dark';
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>

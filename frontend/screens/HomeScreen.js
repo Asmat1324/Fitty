@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useMemo} from 'react';
 import { View, FlatList, Image, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import { Card, Paragraph } from 'react-native-paper';
 import { AuthContext } from '../utilities/authContext';
@@ -38,7 +38,7 @@ const handleUpload = async (e) => {
 }
 const HomeScreen = () => {
   const {theme} = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   const { user } = useContext(AuthContext);
   const [profileImage, setProfileImage] = useState(null);
   const apiUrl = `${config.apiBaseUrl}`

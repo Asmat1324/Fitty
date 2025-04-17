@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import {useTheme} from '../utilities/ThemeContext';
 
@@ -8,7 +8,7 @@ export default function TrackerScreen() {
   const [foodLog, setFoodLog] = useState([]);
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fats: 0 });
   const {theme} = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   const fetchNutrition = async (foodName) => {
     try {
       const response = await fetch(

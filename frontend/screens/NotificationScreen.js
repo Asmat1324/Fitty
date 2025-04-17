@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Appbar, Button } from 'react-native-paper';
 import { List } from 'react-native-paper';
@@ -7,7 +7,7 @@ import {useTheme} from '../utilities/ThemeContext';
 const NotificationScreen = ({navigation}) => {
   const [darkMode, setDarkMode] = useState(false);
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useMemo(() => getStyles(theme), [theme]);
   return (
     <View style ={styles.container}>
     <Text
