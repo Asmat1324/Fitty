@@ -53,7 +53,7 @@ const HomeScreen = () => {
 
     const newPost = {
       id: Date.now().toString(),
-      username: user?.firstname?.toLowerCase() || 'you',
+      username: user?.username?.toLowerCase() || 'you',
       imageUri: { uri: selectedImage },
       caption: newCaption,
       likes: 0,
