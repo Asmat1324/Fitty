@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Card, Paragraph } from 'react-native-paper';
@@ -16,89 +18,217 @@ import config from '../config';
 import axios from 'axios';
 import { useTheme } from '../utilities/ThemeContext';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const [profileImage, setProfileImage] = useState(null);
-  const [posts, setPosts] = useState([
-    {
-      id: '1',
-      username: 'john_doe',
-      imageUri: require('../assets/images/yummy.jpg'),
-      caption: 'Cheat meal!!',
-      likes: 120,
-      comments: 5,
-      liked: false,
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newCaption, setNewCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
-  useEffect(() => {
-    if (user?.profilePicture) {
-      axios
-        .get(`${config.apiBaseUrl}/api/auth/profile-picture/${user.profilePicture}`)
-        .then((res) => setProfileImage(res.data.url))
-        .catch((err) => console.error(err));
+  //set up axios headers with the token
+  const setAuthToken = token => {
+    if (token) {
+      axios.defaults.headers.common['x-auth-token'] = token;
+    } else {
+      delete axios.defaults.headers.common['x-auth-token'];
     }
+  };
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        //load token from storage and set in axios headers
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          setAuthToken(token);
+        }
+
+        //load profile picture if available
+        if (user?.profilePicture) {
+          try {
+            const res = await axios.get(`${config.apiBaseUrl}/api/auth/profile-picture/${user.profilePicture}`);
+              setProfileImage(res.data.url);
+          } catch (err) {
+            console.error("Failed to load profile picture:", err);
+          }
+        }
+
+        //load posts
+        fetchPosts();
+      } catch (err) {
+        console.error("Error loading user data:", err);
+      }
+    };
+
+    loadUserData();
   }, [user]);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      console.log("Attempting to fetch posts from:", `${config.apiBaseUrl}/api/posts`);
+      console.log("headers:", axios.defaults.headers.common);
+
+
+      const res = await axios.get(`${config.apiBaseUrl}/api/posts`);
+      console.log("Posts response:", res.data);
+
+      //transform posts from api format to component format
+      const formattedPosts = await Promise.all(res.data.map(async post => {
+        let imageUrl = '';
+
+        //Get signed URL for the image
+        try {
+          const imgRes = await axios.get(`${config.apiBaseUrl}/api/auth/profile-picture/${post.imageUri}`);
+          imageUrl = imgRes.data.url;
+        } catch (err) {
+          console.error("Error getting image URL:", err);
+        }
+
+        return {
+          id: post._id,
+          username: post.userID.username || post.userID.firstname?.toLowerCase() || 'unknown',
+          imageUri: {uri: imageUrl},
+          caption: post.caption,
+          likes: post.likes,
+          comments: post.comments || 0,
+          liked: false,
+          userId: post.userID._id
+        };
+      }));
+
+      setPosts(formattedPosts);
+    } catch (err) {
+      console.error("failed to fetch posts:", err.response?.data || err.message);
+      Alert.alert("Error", "Failed to load posts. Please try again.")
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpload = () => setModalVisible(true);
 
-  const handlePostSubmit = () => {
-    if (!selectedImage) return alert('Please choose an image.');
-
-    const newPost = {
-      id: Date.now().toString(),
-      username: user?.firstname?.toLowerCase() || 'you',
-      imageUri: { uri: selectedImage },
-      caption: newCaption,
-      likes: 0,
-      comments: 0,
-      liked: false,
-    };
-
-    setPosts([newPost, ...posts]);
-    setNewCaption('');
-    setSelectedImage(null);
-    setModalVisible(false);
-  };
-
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access gallery is required!');
+  const handlePostSubmit = async () => {
+    if (!selectedImage) {
+      Alert.alert("Error", "Please select an image");
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
+    setUploading(true);
 
-    if (!result.cancelled) {
-      setSelectedImage(result.assets[0].uri);
+    try {
+      //create from data fro the image upload
+      const formData = new FormData();
+      const imageName = selectedImage.split('/').pop();
+      const imageType = imageName.endsWith('.jpg') ? 'image/jpeg' : 'image/png';
+
+      formData.append('image', {
+        uri: selectedImage,
+        name: imageName,
+        type: imageType,
+      });
+
+      formData.append('caption', newCaption);
+
+      //Send the post request
+      const res = await axios.post(
+        `${config.apiBaseUrl}/api/posts`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      //Refresh the posts
+      fetchPosts();
+
+      //Clear form and close modal
+      setNewCaption('');
+      setSelectedImage(null);
+      setModalVisible(false);
+
+      Alert.alert("Success", "Your post has been uploaded!");
+    } catch (err) {
+      console.error("Error uploading post:", err);
+      Alert.alert("Error", "Failed to upload post. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleLike = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.liked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
-      )
-    );
+  const pickImage = async () => {
+    try{
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert("Permission Denied", "Permission to access gallery is required!");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      console.log('ImagePicker result:', result);
+
+      //crossOriginIsolated.log('ImagePicker result:', result);
+
+      //check
+      if (!result.canceled) {
+        if (result.assets && result.assets.length > 0){
+          setSelectedImage(result.assets[0].uri);
+        } 
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
   };
+
+  const handleLike = async (postId) => {
+    try {
+      //find the post in our state
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      //If already liked, unlike it; if not liked, like it
+      const endpoint = post.liked
+        ? `${config.apiBaseUrl}/api/posts/unlike/${postId}`
+        : `${config.apiBaseUrl}/api/posts/like/${postId}`;
+
+        await axios.put(endpoint);
+
+        //Update the local state
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
+            post.id === postId
+            ? {
+                ...post,
+                liked: !post.liked,
+                likes: post.liked ? post.likes - 1 : post.likes + 1,
+              }
+              :post
+            )
+          );
+        } catch (err) {
+          console.error("Error liking/unliking post:", err);
+          Alert.alert("Error", "Failed to update like status. Please try again.");
+        }
+      };
 
   const renderPost = ({ item }) => (
     <Card style={styles.card}>
@@ -121,6 +251,14 @@ const HomeScreen = () => {
     </Card>
   );
 
+  if (loading) {
+    return (
+      <View style={[styles.constainer, styles.centered]}>
+        <ActivityIndicator size ="large" color = "#48E0E4" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Image source={{ uri: profileImage }} style={styles.profPicImage} />
@@ -132,12 +270,20 @@ const HomeScreen = () => {
         <Text style={styles.plusText}> + </Text>
       </TouchableOpacity>
 
-      <FlatList
+      {posts.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No posts yet. Be the first to share!</Text>
+          </View>
+      ) : (
+        <FlatList
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.feed}
+        refreshing={loading}
+        onRefresh={fetchPosts}
       />
+      )}
 
       <Modal
         animationType="slide"
@@ -168,8 +314,18 @@ const HomeScreen = () => {
             />
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={handlePostSubmit} style={styles.modalButton}>
-                <Text style={styles.modalButtonText}>Post</Text>
+              <TouchableOpacity 
+              onPress={handlePostSubmit} 
+              style={[styles.modalButton,
+                uploading && {backgroundColor: '#ccc'}
+              ]}
+              disabled={uploading}
+              >
+                {uploading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonText}>Post</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -195,8 +351,21 @@ export const getStyles = (theme) =>
       flex: 1,
       backgroundColor: theme.background,
       paddingTop: 50,
-      
       paddingHorizontal: 16,
+    },
+    centered: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    emptyText: {
+      color: theme.text,
+      fontSize: 16,
+      textAlign: 'center',
     },
     profPicImage: {
       width: 70,
@@ -327,6 +496,8 @@ export const getStyles = (theme) =>
       borderRadius: 8,
       paddingVertical: 10,
       marginHorizontal: 5,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalButtonText: {
       color: '#fff',

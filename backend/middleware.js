@@ -4,27 +4,22 @@ import dotenv from 'dotenv';
 //import express from 'express';
 dotenv.config();
 
-function auth(req, res, next) {
+export default function (req, res, next) {
     //get token from authorization header
-    const authHeader = req.headers['Authorization'];
+    const token = req.header('x-auth-token');
 
-    //check if authHeader exists and starts with 'Bearer '
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    //check if token exists and starts with 'Bearer '
+    if (!token) {
         return res.status(401).json({ msg: 'No token, authorization denied' });
     }
 
     try{
-        //Extract the token (remove 'Bearer ')
-        const token = authHeader.split(' ')[1];
-
-        //verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        //Attach the user payload to the request object
+        //add user from payload to request
         req.user = decoded.user;
         next();
     } catch (err) {
         res.status(401).json({ msg: 'Token is not valid' });
     }
 }
-export default auth;
