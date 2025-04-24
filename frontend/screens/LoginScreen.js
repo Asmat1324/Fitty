@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
       
       await AsyncStorage.setItem('token', responseData.token);
       setToken(responseData.token); // store token
-      console.log("USER IS: " + response.user)
+      console.log("USER IS: " + responseData.user)
       setUser(responseData.user);
       setIsAuthenticated(true);
     } else {
