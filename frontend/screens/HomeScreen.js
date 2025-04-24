@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Card, Paragraph } from 'react-native-paper';
@@ -16,6 +17,8 @@ import config from '../config';
 import axios from 'axios';
 import { useTheme } from '../utilities/ThemeContext';
 import { FontAwesome } from '@expo/vector-icons';
+
+const  {width, height} = Dimensions.get('window');
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -162,7 +165,7 @@ const HomeScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Write a caption..."
-              placeholderTextColor="#888"
+              placeholderTextColor={theme.text}
               value={newCaption}
               onChangeText={setNewCaption}
             />
@@ -296,15 +299,35 @@ export const getStyles = (theme) =>
     },
     modalContent: {
       width: '90%',
-      backgroundColor: 'white',
+      backgroundColor: theme.card,
       borderRadius: 16,
       padding: 20,
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 0.048 * width,
       fontWeight: 'bold',
-      marginBottom: 10,
       textAlign: 'center',
+      color: theme.text,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 10,
+      elevation: 5,
+    },
+    modalButton: {
+      flex: 1,
+      backgroundColor: theme.buttonColor,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: theme.text,
+      paddingVertical: 10,
+      marginHorizontal: 5,
+    },
+    modalButtonText: {
+      color: '#fff',
+      textAlign: 'center',
+      fontWeight: 'bold',
     },
     input: {
       borderWidth: 1,
@@ -314,7 +337,8 @@ export const getStyles = (theme) =>
       marginTop: 10,
       marginBottom: 20,
       fontSize: 16,
-      color: '#333',
+      color: theme.text,
+  
     },
     modalButtons: {
       flexDirection: 'row',
@@ -334,15 +358,16 @@ export const getStyles = (theme) =>
       fontWeight: 'bold',
     },
     pickImageBtn: {
-      backgroundColor: '#ddd',
+      backgroundColor: theme.background,
       padding: 10,
       borderRadius: 8,
+      elevation: 5,
       alignItems: 'center',
       marginTop: 10,
     },
     pickImageText: {
       fontWeight: 'bold',
-      color: '#444',
+      color: theme.text,
     },
     previewImage: {
       width: '100%',
