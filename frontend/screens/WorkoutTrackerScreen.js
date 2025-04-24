@@ -152,6 +152,7 @@ export default function WorkoutTrackerScreen() {
                 setValue={setSelectedSets}
                 setItems={setSetsList}
                 placeholder="Sets"
+                searchPlaceholderTextColor={theme.text}
 
               />
             </View>
@@ -210,6 +211,8 @@ const getStyles = (theme) => StyleSheet.create({
   dropDown: {
     backgroundColor: theme.card,
     borderColor: theme.border,
+    fontColor: theme.text,
+    placeholderTextColor: theme.text,
   },
   card: {
     width: '90%',
@@ -244,6 +247,7 @@ const getStyles = (theme) => StyleSheet.create({
     width: '75%',
     marginTop: 15,
     alignItems: 'center',
+    alignSelf: 'center',
     justifyContent: 'center',
   },
   buttonText: {
@@ -346,6 +350,7 @@ const getStyles = (theme) => StyleSheet.create({
     borderRadius: 6,
     textAlign: 'center',
     fontSize: 16,
+    fontColor: theme.text,
     backgroundColor: theme.inputText,
     color: theme.text,
   },

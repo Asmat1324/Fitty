@@ -6,56 +6,47 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
-import ExerciseCard from "../components/ExerciseCard";
-import {useTheme} from '../utilities/ThemeContext';
+import { useTheme } from '../utilities/ThemeContext';
 
-const MealScreen = ({ navigation }) => {
-  const [bodyPart, setBodyPart] = useState("back");
-  const [dropdownVisible, setDropdownVisible] = useState(false);
+const MealScreen = () => {
+  const [category, setCategory] = useState("Seafood");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [exerciseData, setExerciseData] = useState([]);
-  const {theme} = useTheme();
+  const [mealData, setMealData] = useState([]);
+  const { theme } = useTheme();
   const styles = useMemo(() => getStyles(theme), [theme]);
+
   const categories = [
-    "back",
-    "cardio",
-    "chest",
-    "lower arms",
-    "lower legs",
-    "neck",
-    "shoulders",
-    "upper arms",
-    "upper legs",
-    "waist",
+    "Seafood",
+    "Beef",
+    "Chicken",
+    "Dessert",
+    "Pasta",
+    "Vegetarian",
+    "Vegan",
+    "Breakfast",
+    "Lamb",
   ];
 
-  const fetchExercises = async () => {
+  const fetchMeals = async () => {
     setLoading(true);
     setError("");
+    setMealData([]);
 
     try {
-      const url = `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${bodyPart}`;
-      console.log(url);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-rapidapi-key": "a33b2cb2cemshfbaf09bafc96095p1f66acjsne7d61b9b41b2",
-          "x-rapidapi-host": "exercisedb.p.rapidapi.com",
-        },
-      });
-
+      const url = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`;
+      const response = await fetch(url);
       const data = await response.json();
-      if (data && data.length > 0) {
-        setExerciseData(data);
+
+      if (data.meals) {
+        setMealData(data.meals);
       } else {
-        setError("No exercises found. Try again.");
+        setError("No meals found. Try a different category.");
       }
     } catch (error) {
-      setError("Error fetching data. Please try again.");
+      setError("Error fetching meals. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,76 +54,117 @@ const MealScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity
-        style={styles.select}
-        onPress={() => setDropdownVisible(!dropdownVisible)}
-      >
-        <Text style={styles.selectText}>{bodyPart.toUpperCase()}</Text>
-      </TouchableOpacity> */}
+      <Text style={styles.header}>Meal Generator</Text>
 
-      
+      <View style={styles.categoryContainer}>
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryButton,
+              category === cat && styles.categoryButtonActive,
+            ]}
+            onPress={() => setCategory(cat)}
+          >
+            <Text style={styles.categoryText}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={fetchExercises}>
-        <Text style={styles.buttonText}>Fetch Meals</Text>
+      <TouchableOpacity style={styles.fetchButton} onPress={fetchMeals}>
+        <Text style={styles.fetchButtonText}>Get {category} Meals</Text>
       </TouchableOpacity>
+
+      {loading && <ActivityIndicator size="large" color={theme.primary} />}
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       <FlatList
-        data={exerciseData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ExerciseCard data={item} />}
+        data={mealData}
+        keyExtractor={(item) => item.idMeal}
+        renderItem={({ item }) => (
+          <View style={styles.mealCard}>
+            <Image source={{ uri: item.strMealThumb }} style={styles.mealImage} />
+            <Text style={styles.mealName}>{item.strMeal}</Text>
+          </View>
+        )}
       />
-      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
-      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
 
-const getStyles = (theme) => StyleSheet.create({
+const getStyles = (theme) =>
+  StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
       padding: 20,
-    },
-    select: {
       backgroundColor: theme.background,
-      borderColor: theme.text,
-      padding: 12,
-      borderRadius: 8,
-      borderWidth: 1,
     },
-    selectText: {
+    header: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: theme.text,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    categoryContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      marginBottom: 15,
+    },
+    categoryButton: {
+      backgroundColor: theme.card,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      margin: 4,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    categoryButtonActive: {
+      backgroundColor: theme.primary,
+    },
+    categoryText: {
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    fetchButton: {
+      backgroundColor: theme.buttonColor,
+      padding: 12,
+      borderRadius: 20,
+      alignItems: "center",
+      marginVertical: 10,
+    },
+    fetchButtonText: {
+      color: "#fff",
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+    mealCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.card,
+      padding: 10,
+      marginVertical: 6,
+      borderRadius: 12,
+      elevation: 2,
+    },
+    mealImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      marginRight: 15,
+    },
+    mealName: {
       fontSize: 16,
       color: theme.text,
-    },
-    dropdown: {
-      backgroundColor: "#fff",
-      borderRadius: 8,
-      marginTop: 5,
-    },
-    dropdownItem: {
-      padding: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: "#ccc",
-    },
-    dropdownText: {
-      fontSize: 16,
-      color: "#000",
-    },
-    button: {
-      backgroundColor: theme.buttonColor,
-      borderRadius: 20,
-      padding: 12,
-      alignItems: "center",
-      marginTop: 20,
-    },
-    buttonText: {
-      color: "#fff",
-      fontSize: 16,
-      fontWeight: "bold",
+      flexShrink: 1,
     },
     errorText: {
       color: "#FF4D4D",
       textAlign: "center",
-      fontSize: 12,
       marginTop: 10,
     },
   });

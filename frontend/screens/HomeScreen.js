@@ -19,6 +19,9 @@ import axios from 'axios';
 import { useTheme } from '../utilities/ThemeContext';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const { theme } = useTheme();

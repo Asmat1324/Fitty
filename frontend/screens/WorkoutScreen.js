@@ -1,4 +1,4 @@
-import React, { useState, useMemo} from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,28 +8,34 @@ import {
   ActivityIndicator,
 } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
-import {useTheme} from '../utilities/ThemeContext';
+import { useTheme } from '../utilities/ThemeContext';
 
-const WorkoutScreen = ({ navigation }) => {
+const categories = [
+  "back",
+  "cardio",
+  "chest",
+  "lower arms",
+  "lower legs",
+  "neck",
+  "shoulders",
+  "upper arms",
+  "upper legs",
+  "waist",
+];
+
+const WorkoutScreen = () => {
   const [bodyPart, setBodyPart] = useState("back");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [exerciseData, setExerciseData] = useState([]);
-  const {theme} = useTheme();
+  const { theme } = useTheme();
+
   const styles = useMemo(() => getStyles(theme), [theme]);
-  const categories = [
-    "back",
-    "cardio",
-    "chest",
-    "lower arms",
-    "lower legs",
-    "neck",
-    "shoulders",
-    "upper arms",
-    "upper legs",
-    "waist",
-  ];
+
+  useEffect(() => {
+    fetchExercises();
+  }, [bodyPart]);
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -37,22 +43,20 @@ const WorkoutScreen = ({ navigation }) => {
 
     try {
       const url = `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${bodyPart}`;
-      console.log(url);
-
       const response = await fetch(url, {
-        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "x-rapidapi-key": "a33b2cb2cemshfbaf09bafc96095p1f66acjsne7d61b9b41b2",
           "x-rapidapi-host": "exercisedb.p.rapidapi.com",
         },
       });
 
       const data = await response.json();
-      if (data && data.length > 0) {
+
+      if (data && Array.isArray(data)) {
         setExerciseData(data);
       } else {
-        setError("No exercises found. Try again.");
+        setExerciseData([]);
+        setError("No exercises found.");
       }
     } catch (error) {
       setError("Error fetching data. Please try again.");
@@ -81,75 +85,87 @@ const WorkoutScreen = ({ navigation }) => {
                 setDropdownVisible(false);
               }}
             >
-              <Text style={styles.dropdownText}>{category}</Text>
+              <Text style={styles.dropdownText}>{category.toUpperCase()}</Text>
             </TouchableOpacity>
           ))}
         </View>
       )}
 
       <TouchableOpacity style={styles.button} onPress={fetchExercises}>
-        <Text style={styles.buttonText}>Fetch Exercises</Text>
+        <Text style={styles.buttonText}>Refresh Exercises</Text>
       </TouchableOpacity>
-      <FlatList
-        data={exerciseData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ExerciseCard data={item} />}
-      />
-      {loading && <ActivityIndicator size="large" color="#48E0E4" />}
+
+      {loading && <ActivityIndicator size="large" color={theme.primary} />}
+
+      {!loading && exerciseData.length > 0 && (
+        <FlatList
+          data={exerciseData}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ExerciseCard data={item} />}
+        />
+      )}
+
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
 
-const getStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-    padding: 20,
-  },
-  select: {
-    backgroundColor: theme.background,
-    borderColor: theme.text,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  selectText: {
-    fontSize: 16,
-    color: theme.text,
-  },
-  dropdown: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginTop: 5,
-  },
-  dropdownItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  button: {
-    backgroundColor: theme.buttonColor,
-    borderRadius: 20,
-    padding: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "#FF4D4D",
-    textAlign: "center",
-    fontSize: 12,
-    marginTop: 10,
-  },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      padding: 20,
+    },
+    select: {
+      backgroundColor: theme.card,
+      borderColor: theme.border,
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+    },
+    selectText: {
+      fontSize: 18,
+      color: theme.text,
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    dropdown: {
+      backgroundColor: theme.card,
+      borderRadius: 8,
+      marginTop: 5,
+      elevation: 5,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    dropdownItem: {
+      padding: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    dropdownText: {
+      fontSize: 16,
+      color: theme.text,
+    },
+    button: {
+      backgroundColor: theme.buttonColor,
+      borderRadius: 20,
+      padding: 12,
+      alignItems: "center",
+      marginVertical: 20,
+      elevation: 3,
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    errorText: {
+      color: theme.error,
+      textAlign: "center",
+      fontSize: 14,
+      marginTop: 10,
+    },
+  });
 
 export default WorkoutScreen;
