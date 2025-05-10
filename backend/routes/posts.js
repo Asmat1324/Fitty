@@ -195,7 +195,7 @@ router.put('/like/:id', auth, async (req, res) => {
 
         //check if user already liked the post
         const userLikedIndex = post.likes.findIndex(
-            (like) => like.user.toString() === req.user.id
+            (like) => like?.user?.toString?.() === req.user.id
         );
 
         if (userLikedIndex === -1){
@@ -281,8 +281,6 @@ router.post(
                 date: new Date(),
             });
 
-            post.comments += 1;
-
             await post.save();
             console.log('Comment added to post:', req.params.id);
             res.json(post);
@@ -295,5 +293,29 @@ router.post(
         }
     }
 );
-       
+
+/**
+ * @route GET /api/posts/comments/:id
+ * @desc Get all comments for a post
+ * @access Private
+ */
+router.get('/comments/:id', async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id).populate({
+            path: 'comments.user',
+            select: 'username firstname lastname profilePicture' 
+        });
+
+        if (!post) {
+            return res.status(404).json({ msg: 'Post not found' });
+        }
+        res.json(post.comments);
+    }catch(err) {
+        console.error('Error fetching comments:', err); 
+        res.status(500).json({
+            msg: 'Server error',
+            error: err.message
+        });
+    }
+});
 export default router;

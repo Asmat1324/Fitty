@@ -37,6 +37,12 @@ const HomeScreen = () => {
   const [newCaption, setNewCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const [isCommentsVisible, setIsCommentsVisible] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentInputVisible, setCommentInputVisible] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+
   //set up axios headers with the token
   const setAuthToken = token => {
     if (token) {
@@ -78,13 +84,7 @@ const HomeScreen = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      //console.log("Attempting to fetch posts from:", `${config.apiBaseUrl}/api/posts`);
-      //console.log("headers:", axios.defaults.headers.common);
-
       const res = await axios.get(`${config.apiBaseUrl}/api/posts`);
-      //console.log("Posts response:", res.data);
-
-      //transform posts from api format to component format
       const formattedPosts = await Promise.all(res.data.map(async post => {
         let imageUrl = '';
 
@@ -96,8 +96,6 @@ const HomeScreen = () => {
           console.error("Error getting image URL:", err);
         }
 
-       // console.log("Processing post:", JSON.stringify(post, null, 2));
-
         const isLikedByUser = post.likes.some(like => like.user === user?._id);
 
         const formattedPost = {
@@ -106,12 +104,10 @@ const HomeScreen = () => {
           imageUri: {uri: imageUrl},
           caption: post.caption,
           likes: post.likes.length,
-          //comments: post.comments ? posts.comments.length : 0,
+          comments: post.comments ? post.comments.length : 0,
           liked: isLikedByUser,
           userId: post.userID._id
         };
-        //console.log("Formatted post:", JSON.stringify(formattedPost, null, 2));
-
         return formattedPost;
       }));
 
@@ -191,11 +187,6 @@ const HomeScreen = () => {
         aspect: [1, 1],
         quality: 1,
       });
-
-      //console.log('ImagePicker result:', result);
-
-      //crossOriginIsolated.log('ImagePicker result:', result);
-
       //check
       if (!result.canceled) {
         if (result.assets && result.assets.length > 0){
@@ -209,14 +200,7 @@ const HomeScreen = () => {
   };
 
   const handleLike = async (postId) => {
-    //console.log("handleLike called for postId:", postId);
-
-    try {
-      //console.log("Axios default headers:", axios.defaults.headers.common);
-      //console.log("Attempting to like post with URL:", `${config.apiBaseUrl}/api/posts/like/${postId}`);
-      //console.log("Attempting to like post with URL:", `<span class="math-inline">\{config\.apiBaseUrl\}/api/posts/like/</span>{postId}`);
-     // await axios.put(`<span class="math-inline">\{config\.apiBaseUrl\}/api/posts/like/</span>{postId}`);
-     // console.log("PUT request successful for postId:", postId);
+    try { 
       await axios.put(`${config.apiBaseUrl}/api/posts/like/${postId}`);
 
       //Update the local state
@@ -237,6 +221,84 @@ const HomeScreen = () => {
         }
       };
 
+      const openComments = async (postId) => {
+        console.log("Post ID clicked:", postId);
+        setSelectedPostId(postId);
+        console.log("isCommentsVisible before:", isCommentsVisible);
+        setIsCommentsVisible(true);
+        console.log("isCommentsVisible after:", isCommentsVisible);
+        setComments([]);
+        setCommentInputVisible(true);
+        try {
+          const res = await axios.get(`${config.apiBaseUrl}/api/posts/comments/${postId}`);
+          setComments(res.data);
+          console.log("Comments data received:", res.data);
+        } catch (err) {
+          console.error("Error fetching comments:", err);
+          Alert.alert("Error", "Failed to load comments. Please try again.");
+        }
+      };
+
+      const closeComments = () => {
+        setIsCommentsVisible(false);
+        setSelectedPostId(null);
+        setComments([]);
+        setCommentInputVisible(false);
+        setNewCommentText('');
+      };
+
+      const handlePostComment = async () => {
+        if (!newCommentText.trim()) {
+          return;
+        }
+        try {
+          await axios.post(`${config.apiBaseUrl}/api/posts/comment/${selectedPostId}`, {
+            text: newCommentText,
+          });
+          setNewCommentText('');
+          setCommentInputVisible(false);
+          // Refresh comments
+          openComments(selectedPostId);
+          Alert.alert("Success", "Comment posted successfully!");
+        } catch (err) {
+          console.error("Error posting comment:", err);
+          Alert.alert("Error", "Failed to post comment.");
+        }
+      };
+
+      const handleDeletePost = async (postId) => {
+        Alert.alert(
+          "Delete Post",
+          "Are you sure you want to delete this post? This action cannot be undone.",
+          [
+            {text: "Cancel", style: "cancel"},
+            {text: "Delete", style: "destructive",
+              onPress: async () => {
+                try {
+                  await axios.delete(`${config.apiBaseUrl}/api/posts/${postId}`);
+                  setPosts(prevPosts => prevPosts.filter(post => post.id != postId));
+                  Alert.alert("Deleted", "Post has been deleted successfully.");
+                } catch (err) {
+                  console.error("Error deleting post:", err);
+                  Alert.alert("Error", "Failed to delete post. Please try again.");
+                }
+              }
+            }
+          ]
+        );
+      };
+
+      const renderCommentItem = ({ item }) => {
+        console.log("Rendering comment item:", item);
+        return (
+          <View style={styles.commentItem}>
+            <Text style={styles.commentUser}>{item.user?.username || 'Unknown'}:</Text>
+            <Text style={styles.commentText}>{item.text}</Text>
+            {item.date && <Text style={styles.commentTime}>{new Date(item.date).toLocaleTimeString()} - {new Date(item.date).toLocaleDateString()}</Text>}
+          </View>
+        );
+      };
+
   const renderPost = ({ item }) => (
     <Card style={styles.card}>
       <Card.Content>
@@ -253,7 +315,14 @@ const HomeScreen = () => {
           />
           <Text style={styles.likes}>{item.likes}</Text>
         </TouchableOpacity>
-        <Text style={styles.comments}>{item.comments} Comments</Text>
+        <TouchableOpacity onPress={() => openComments(item.id)} style={styles.commentBtn}>
+          <Text style={styles.comments}>{item.comments} Comments</Text>
+        </TouchableOpacity>
+        {item.userId === user?._id && (
+          <TouchableOpacity onPress={() => handleDeletePost(item.id)} style={styles.deleteBtn}>
+            <FontAwesome name="trash" size={20} color="#e74c3c" />
+          </TouchableOpacity>
+        )}
       </Card.Actions>
     </Card>
   );
@@ -348,6 +417,43 @@ const HomeScreen = () => {
           </View>
         </View>
       </Modal>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isCommentsVisible}
+        onRequestClose={closeComments}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.commentsModal}>
+            <Text style={styles.modalTitle}>Comments</Text>
+            
+            {comments.length === 0 ? (
+              <Text style={styles.noCommentsText}>No comments yet</Text>
+            ) : (
+              <FlatList
+                data={comments}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={renderCommentItem}
+                style={styles.commentsList}
+              />
+            )}
+
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write a comment..."
+              value={newCommentText}
+              onChangeText={setNewCommentText}
+              />
+              <TouchableOpacity style={styles.postCommentButton} onPress={handlePostComment}>
+                <Text style={styles.postCommentText}>PostComment</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.closeButton} onPress={closeComments}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+          </View>
+    </View>
+    </Modal>
     </View>
   );
 };
@@ -469,8 +575,9 @@ export const getStyles = (theme) =>
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'rgba(0,0,0,0.5)',
+      padding: 10,
     },
-    modalContent: {
+ modalContent: {
       width: '90%',
       backgroundColor: theme.card,
       borderRadius: 16,
@@ -551,6 +658,69 @@ export const getStyles = (theme) =>
       marginTop: 10,
       marginBottom: 10,
     },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    commentsModal: {
+      width: '90%',
+      maxHeight: '80%',
+      backgroundColor: theme.card,
+      borderRadius: 10,
+      padding: 15,
+    },
+    modalTitle:{
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    noCommentsText: {
+      fontStyle: 'italic',
+      textAlign: 'center',
+      marginVertical: 10,
+    },
+    commentsList: {
+      maxHeight: 200,
+      marginBottom: 10,
+    },
+    commentInput: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      marginTop: 10,
+    },
+    postCommentButton: {
+      backgroundColor: '#48E0E4',
+      borderRadius: 5,
+      padding: 10,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    postCommentText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+    closeButton: {
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    closeButtonText: {
+      color: '#888',
+    },
+    commentUser: {
+      fontWeight: 'bold',
+    },
+    commentTime: {
+      fontSize: 10,
+      color: '#666',
+      marginLeft: 4,
+    },
+    deleteBtn: {
+      marginLeft: 16,
+    }
   });
 
 export default HomeScreen;
