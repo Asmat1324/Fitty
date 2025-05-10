@@ -260,10 +260,35 @@ const HomeScreen = () => {
           // Refresh comments
           openComments(selectedPostId);
           Alert.alert("Success", "Comment posted successfully!");
+          //console.log(post.comments);
         } catch (err) {
           console.error("Error posting comment:", err);
           Alert.alert("Error", "Failed to post comment.");
         }
+      };
+
+      const handleDeleteComment = async (commentId) => {
+        Alert.alert(
+          "Delete Comment",
+          "Are you sure you want to delete this comment? This action cannot be undone.",
+          [
+            {text: "Cancel", style: "cancel"},
+            {text: "Delete", style: "destructive",
+              onPress: async () => {
+                try {
+                  console.log('Deleting comment with:', selectedPostId, commentId);
+                  await axios.delete(`${config.apiBaseUrl}/api/posts/comment/${selectedPostId}/${commentId}`);
+                  //refresh comments
+                  openComments(selectedPostId);
+                  Alert.alert("Deleted", "Comment has been deleted.");
+                } catch (err) {
+                  console.error("Error deleting comment:", err);
+                  Alert.alert("Error", "Failed to delete comment. Please try again.");
+                }
+              }
+            }
+          ]
+        );
       };
 
       const handleDeletePost = async (postId) => {
@@ -289,12 +314,17 @@ const HomeScreen = () => {
       };
 
       const renderCommentItem = ({ item }) => {
-        console.log("Rendering comment item:", item);
         return (
           <View style={styles.commentItem}>
             <Text style={styles.commentUser}>{item.user?.username || 'Unknown'}:</Text>
             <Text style={styles.commentText}>{item.text}</Text>
             {item.date && <Text style={styles.commentTime}>{new Date(item.date).toLocaleTimeString()} - {new Date(item.date).toLocaleDateString()}</Text>}
+
+            {item.user?._id === user?._id && (
+              <TouchableOpacity onPress={() => handleDeleteComment(item._id)} style={styles.deleteCommentButton}>
+                <FontAwesome name="trash" size={16} color="red" />
+              </TouchableOpacity>
+            )}
           </View>
         );
       };
@@ -720,7 +750,12 @@ export const getStyles = (theme) =>
     },
     deleteBtn: {
       marginLeft: 16,
-    }
+    },
+    deleteCommentButton: {
+      position: 'absolute',
+      top: 5,
+      right: 10,
+    },
   });
 
 export default HomeScreen;

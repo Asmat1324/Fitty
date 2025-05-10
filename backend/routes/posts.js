@@ -2,6 +2,7 @@
 import express from 'express';
 import Post from '../models/post.js';
 import auth from '../middleware.js';
+
 import { check, validationResult } from 'express-validator';
 import multer from 'multer';
 import fs from 'fs';
@@ -11,7 +12,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const router = express.Router();
-
 //AWS S3 client setup
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -217,38 +217,7 @@ router.put('/like/:id', auth, async (req, res) => {
         });
     }
 });
-/*
-//@route PUT /api/posts/unlike/:id
-//@desc Unlike a post
-//@access Private
-router.put('/unlike/:id', auth, async (req, res) => {
-    try {
-        console.log('Unlike post request for post:', req.params.id);
 
-        const post = await Post.findById(req.params.id);
-
-        if (!post) {
-            console.log('Post not found:', req.params.id);
-            return res.status(404).json({ msg: 'Post not found' });
-        }
-
-        //decrement likes
-        if (post.likes > 0) {
-        post.likes -= 1;
-        await post.save();
-        }
-
-        console.log(`Post ${req.params.id} unliked, new count: ${post.likes}`);
-        res.json(post);
-    } catch (err) {
-        console.error('Error unliking post:', err);
-        res.status(500).json({
-            msg: 'Server error',
-            error: err.message
-        });
-    }
-});
-*/
 //@route POST /api/posts/comment/:id
 //@desc Comment on a post
 //@access Private
@@ -293,6 +262,63 @@ router.post(
         }
     }
 );
+
+/**
+ * @route DELETE /api/posts/comment/:postId/:commentId
+ * @desc Delete a comment from a post (only by comment author or post author)
+ * @access Private
+ */
+router.delete('/comment/:postId/:commentId', auth, async (req, res) => {
+    try {
+        const { postId, commentId } = req.params;
+        console.log(`Received DELETE request: postId=${postId}, commentId=${commentId}`);
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            console.log('Post not found with ID:', postId);
+            return res.status(404).json({ msg: 'Post not found' });
+        }
+
+        console.log('Found post. Number of comments:', post.comments.length);
+
+        post.comments.forEach((c, index) => {
+            console.log(`Comment[${index}] ID:`, c._id.toString());
+        });
+
+        let comment = post.comments.id(commentId);
+        if (!comment) {
+            console.log('comment.id() failed. Trying .find() fallback.');
+            comment = post.comments.find(c => c._id.toString() === commentId);
+        }
+        if (!comment) {
+            console.log("Comment not found. Available IDs:", post.comments.map( c => c._id.toString()));
+            return res.status(404).json({ msg: 'Comment not found' });
+        }   
+
+        //Allow deletion if user is either comment or post author
+        const userId = req.user.id;
+        console.log(`Request made by user: ${userId}, Comment author: ${comment.user}, Post author: ${post.userID}`);
+
+        if (comment.user.toString() !== req.user.id && post.userID.toString() !== req.user.id) {
+            console.log('User not authorized to delete this comment');
+            return res.status(403).json({msg: 'User not authorized to delete this comment' });
+        }
+
+        //Remove comment
+        post.comments = post.comments.filter(c => c._id.toString() !== commentId);
+        //comment.remove();
+        await post.save();
+
+        console.log('Comment deleted successfully');
+        res.json({ msg: 'Comment deleted', comments: post.comments });
+    } catch (err) {
+        console.error('Error deleting comment:', err);
+        res.status(500).json({
+            msg: 'Server error',
+            error: err.message
+        });
+    }
+});
 
 /**
  * @route GET /api/posts/comments/:id
