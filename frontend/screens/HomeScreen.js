@@ -78,12 +78,11 @@ const HomeScreen = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      console.log("Attempting to fetch posts from:", `${config.apiBaseUrl}/api/posts`);
-      console.log("headers:", axios.defaults.headers.common);
-
+      //console.log("Attempting to fetch posts from:", `${config.apiBaseUrl}/api/posts`);
+      //console.log("headers:", axios.defaults.headers.common);
 
       const res = await axios.get(`${config.apiBaseUrl}/api/posts`);
-      console.log("Posts response:", res.data);
+      //console.log("Posts response:", res.data);
 
       //transform posts from api format to component format
       const formattedPosts = await Promise.all(res.data.map(async post => {
@@ -97,16 +96,23 @@ const HomeScreen = () => {
           console.error("Error getting image URL:", err);
         }
 
-        return {
+       // console.log("Processing post:", JSON.stringify(post, null, 2));
+
+        const isLikedByUser = post.likes.some(like => like.user === user?._id);
+
+        const formattedPost = {
           id: post._id,
           username: post.userID.username || post.userID.firstname?.toLowerCase() || 'unknown',
           imageUri: {uri: imageUrl},
           caption: post.caption,
-          likes: post.likes,
-          comments: post.comments || 0,
-          liked: false,
+          likes: post.likes.length,
+          //comments: post.comments ? posts.comments.length : 0,
+          liked: isLikedByUser,
           userId: post.userID._id
         };
+        //console.log("Formatted post:", JSON.stringify(formattedPost, null, 2));
+
+        return formattedPost;
       }));
 
       setPosts(formattedPosts);
@@ -186,7 +192,7 @@ const HomeScreen = () => {
         quality: 1,
       });
 
-      console.log('ImagePicker result:', result);
+      //console.log('ImagePicker result:', result);
 
       //crossOriginIsolated.log('ImagePicker result:', result);
 
@@ -203,22 +209,20 @@ const HomeScreen = () => {
   };
 
   const handleLike = async (postId) => {
+    //console.log("handleLike called for postId:", postId);
+
     try {
-      //find the post in our state
-      const post = posts.find(p => p.id === postId);
-      if (!post) return;
+      //console.log("Axios default headers:", axios.defaults.headers.common);
+      //console.log("Attempting to like post with URL:", `${config.apiBaseUrl}/api/posts/like/${postId}`);
+      //console.log("Attempting to like post with URL:", `<span class="math-inline">\{config\.apiBaseUrl\}/api/posts/like/</span>{postId}`);
+     // await axios.put(`<span class="math-inline">\{config\.apiBaseUrl\}/api/posts/like/</span>{postId}`);
+     // console.log("PUT request successful for postId:", postId);
+      await axios.put(`${config.apiBaseUrl}/api/posts/like/${postId}`);
 
-      //If already liked, unlike it; if not liked, like it
-      const endpoint = post.liked
-        ? `${config.apiBaseUrl}/api/posts/unlike/${postId}`
-        : `${config.apiBaseUrl}/api/posts/like/${postId}`;
-
-        await axios.put(endpoint);
-
-        //Update the local state
-        setPosts(prevPosts =>
-          prevPosts.map(post =>
-            post.id === postId
+      //Update the local state
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId
             ? {
                 ...post,
                 liked: !post.liked,

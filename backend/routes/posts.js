@@ -48,21 +48,21 @@ router.post(
             return res.status(400).json({ msg: 'Image is required' });
         }
 
-        console.log('User ID from token:', req.user.id);
-        console.log('File received:', req.file);
-        console.log('Caption:', req.body.caption);
+        //console.log('User ID from token:', req.user.id);
+        //console.log('File received:', req.file);
+        //console.log('Caption:', req.body.caption);
 
         //upload image to S3
         const ext = path.extname(req.file.originalname);
         const key = `post-${Date.now()}${ext}`;
         const fileStream = fs.createReadStream(req.file.path);
 
-        console.log('Uploading to S3:', {
+      /*  console.log('Uploading to S3:', {
             bucket: process.env.AWS_BUCKET_NAME,
             key: key,
             contentType: req.file.mimetype,
         });
-
+*/
         await s3.send(new PutObjectCommand({
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: key,
@@ -80,14 +80,14 @@ router.post(
             userID: req.user.id,
             imageUri: key, 
             caption: req.body.caption || '',
-            likes: 0,
-            comments: 0,
+            likes: [],
+            comments: [],
         });
 
-        console.log('Creating post:', newPost);
+      //  console.log('Creating post:', newPost);
         const post = await newPost.save();
 
-        console.log('Post created successfully:', post);
+      //  console.log('Post created successfully:', post);
         res.status(201).json(post);
     } catch (err) {
         console.error('Post creation error:', err);
@@ -105,13 +105,13 @@ router.post(
 // @access Private (users need to be logged in to see the feed)
 router.get('/', auth, async (req, res) => {
     try {
-        console.log('GET /api/posts requested by user:', req.user.id);
+       // console.log('GET /api/posts requested by user:', req.user.id);
 
         const posts = await Post.find()
         .sort({ date_created: -1 })
         .populate('userID', ['username', 'firstname', 'lastname', 'profilePicture']);
 
-        console.log(`Found ${posts.length} posts`);
+     //   console.log(`Found ${posts.length} posts`);
         res.json(posts);
     } catch (err) {
         console.error('Error fetching posts:', err);
@@ -127,12 +127,12 @@ router.get('/', auth, async (req, res) => {
 //@access Private
 router.get('/user', auth, async (req, res) => {
     try {
-        console.log('Fetching posts for user:', req.user.id);
+      //  console.log('Fetching posts for user:', req.user.id);
 
         const posts = await Post.find({ userID: req.user.id})
         .sort({ date_created: -1 });
 
-        console.log(`Found ${posts.lenght} posts for user ${req.user.id}`);
+       // console.log(`Found ${posts.lenght} posts for user ${req.user.id}`);
         res.json(posts);
     } catch (err) {
         console.error('Error fetching user posts:', err);
@@ -180,34 +180,44 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 //@route PUT /api/posts/like/:id
-//@desc Like a post
+//@desc Like or unlike post
 //@access Private
 router.put('/like/:id', auth, async (req, res) => {
     try {
-        crossOriginIsolated.log('Like post request for post:', req.params.id);
+      //  console.log('Like/unlike request for post:', req.params.id, 'by user:', req.user.id);
 
         const post = await Post.findById(req.params.id);
 
         if (!post) {
-            console.log('Post not found:', req.params.id);
+           // console.log('Post not found:', req.params.id);
             return res.status(404).json({ msg: 'Post not found' });
         }
 
-        //increment likes
-        post.likes += 1;
-        await post.save();
+        //check if user already liked the post
+        const userLikedIndex = post.likes.findIndex(
+            (like) => like.user.toString() === req.user.id
+        );
 
-        console.log(`Post ${req.params.id} liked, new count: ${post.likes}`);
+        if (userLikedIndex === -1){
+            //add the like
+            post.likes.unshift({ user: req.user.id });
+        } else {
+            //remove the like
+            post.likes.splice(userLikedIndex, 1);
+        }
+
+        await post.save();
+        // console.log(`Post ${req.params.id} liked/unliked, new count: ${post.likes.length}`);
         res.json(post);
     } catch (err) {
-        console.error('Error liking post:', err);
+        console.error('Error liking/unliking post:', err);
         res.status(500).json({
             msg: 'Server error',
             error: err.message
         });
     }
 });
-
+/*
 //@route PUT /api/posts/unlike/:id
 //@desc Unlike a post
 //@access Private
@@ -238,7 +248,7 @@ router.put('/unlike/:id', auth, async (req, res) => {
         });
     }
 });
-
+*/
 //@route POST /api/posts/comment/:id
 //@desc Comment on a post
 //@access Private

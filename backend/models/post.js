@@ -1,21 +1,42 @@
 import mongoose from 'mongoose';
+const Schema = mongoose.Schema;
 
-const PostSchema = new mongoose.Schema({
-    // link the post to the user object from the database
+const PostSchema = new Schema({
     userID: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
     //store link to the image
-    imageUri: { type: String, required: true },
-    caption: { type: String },
-   // array of ObjectIds to see which users liked the post
-    likes: {type: Number, default: 0},
-    comments: {type: Number, default: 0},
-    date_created: { type: Date, default: Date.now },
+    imageUri: { type: String, required: true   
+    },
+    caption: { 
+        type: String 
+    },
+    likes: [
+        {
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            }
+        }
+    ],
+    comments: [
+        {
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            text: { type: String, required: true },
+             date: {
+                type: Date,
+                default: Date.now
+             }
+        }
+    ],
+    date_created: {
+        type: Date,
+        default: Date.now
+    }
 });
-
-const Post = mongoose.model('Post', PostSchema);
-
-export default Post;
+export default mongoose.model('Post', PostSchema);
