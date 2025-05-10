@@ -314,13 +314,16 @@ const HomeScreen = () => {
       };
 
       const renderCommentItem = ({ item }) => {
+        const isCommentAuthor = item.user?._id === user?._id === user?._id;
+        const isPostOwner = posts.find(post => post.id === selectedPostId)?.userId === user?._id;
+        const canDeleteComment = isCommentAuthor || isPostOwner;
         return (
           <View style={styles.commentItem}>
             <Text style={styles.commentUser}>{item.user?.username || 'Unknown'}:</Text>
             <Text style={styles.commentText}>{item.text}</Text>
             {item.date && <Text style={styles.commentTime}>{new Date(item.date).toLocaleTimeString()} - {new Date(item.date).toLocaleDateString()}</Text>}
 
-            {item.user?._id === user?._id && (
+            {canDeleteComment && (
               <TouchableOpacity onPress={() => handleDeleteComment(item._id)} style={styles.deleteCommentButton}>
                 <FontAwesome name="trash" size={16} color="red" />
               </TouchableOpacity>
