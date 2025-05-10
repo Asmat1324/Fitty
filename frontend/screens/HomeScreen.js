@@ -478,7 +478,7 @@ const HomeScreen = () => {
               onChangeText={setNewCommentText}
               />
               <TouchableOpacity style={styles.postCommentButton} onPress={handlePostComment}>
-                <Text style={styles.postCommentText}>PostComment</Text>
+                <Text style={styles.postCommentText}>Post Comment</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.closeButton} onPress={closeComments}>

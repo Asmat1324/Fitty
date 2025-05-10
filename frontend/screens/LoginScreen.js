@@ -7,34 +7,45 @@ import {useTheme} from '../utilities/ThemeContext'
 
 export default function LoginScreen({ navigation, setIsAuthenticated }) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  //const [formData, setFormData] = useState({ email: "", password: "" });
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const {setUser, setToken } = useContext(AuthContext);
   const {theme} = useTheme();
   const styles = useMemo(() => getStyles(theme), [theme]);
-  const handleInputChange = (name, value) => {
+  
+ /* const handleInputChange = (name, value) => {
     setFormData({...formData, [name]: value});
   }
+    */
   const handleLogin = async (e) => {
       e.preventDefault();
       setErrorMessage("");
 
+      //check if identifier contains @ to determine if it's an email
+      const isEmail = loginIdentifier.includes('@');
+
+      //create request body using email or username
+      const requestBody = {
+        password: password,
+        ...(isEmail ? { email: loginIdentifier } : {username: loginIdentifier })
+      };
+      
    try{
     const apiUrl = `${config.apiBaseUrl}/api/auth/login`; // imported variable from config.js
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(requestBody),
     });
     
-    const responseData = await response.json(); // read once
+    const responseData = await response.json(); 
     
     if (response.ok) {
       
       await AsyncStorage.setItem('token', responseData.token);
       setToken(responseData.token); // store token
-      console.log("USER IS: " + responseData.user)
+      //console.log("USER IS: " + responseData.user)
       setUser(responseData.user);
       setIsAuthenticated(true);
     } else {
@@ -53,29 +64,26 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
       <View style={styles.card}>
       <TextInput
           style={styles.input}
-          placeholder="Email"
-          name="email"
+          placeholder="Email or Username"
+          //name="email"
           placeholderTextColor={theme.text}
-          value={formData.email}
-          onChangeText={(text) => handleInputChange('email', text)}
+          value={loginIdentifier}
+          onChangeText={setLoginIdentifier}
+         // onChangeText={(text) => handleInputChange('email', text)}
         />
-        {errorMessage ? <Text style={styles.error}> {errorMessage}</Text> : null}
-       {/*{errorMessage.includes('Email') || errorMessage.includes('Username') || errorMessage === "Invalid credentials." ? (
-        <Text style={styles.error}> {errorMessage}</Text>
-       ) : null}
-        */}
+        
          <TextInput
           style={styles.input}
           placeholder="Password"
-          name="password"
+         // name="password"
           placeholderTextColor={theme.text}
           secureTextEntry
-          value={formData.password}
-          onChangeText={(text) => handleInputChange('password', text)} 
+          value={password}
+          onChangeText={setPassword}
+          //onChangeText={(text) => handleInputChange('password', text)} 
         />
-        {/*{errorMessage.includes('Password') || errorMessage === "Invalid credentials." ? (
-          <Text style={styles.error}>{errorMessage}</Text>
-          ) : null} */}
+
+        {errorMessage ? <Text style={styles.error}> {errorMessage}</Text> : null}
         <TouchableOpacity>
           <Text style={styles.forgotPassword}>Forgot password</Text>
         </TouchableOpacity>
@@ -84,7 +92,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           <Text style={styles.buttonText}>LOG IN</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Sign up')}>
           <Text style={styles.buttonText}>SIGN UP</Text>
         </TouchableOpacity>
       </View>
