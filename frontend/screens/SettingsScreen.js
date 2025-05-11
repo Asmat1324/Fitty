@@ -1,12 +1,27 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Switch } from 'react-native';
+import React, { useMemo, useContext } from 'react';
+import { View, Text, StyleSheet, Switch, Alert } from 'react-native';
 import { List } from 'react-native-paper';
-import { useTheme} from '../utilities/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../utilities/ThemeContext';
+import { AuthContext } from '../utilities/authContext';
 
 const SettingsScreen = ({ navigation }) => {
   const { theme, toggleTheme, mode } = useTheme();
+  const { setToken, setUser } = useContext(AuthContext);
   const darkMode = mode === 'dark';
   const styles = useMemo(() => getStyles(theme), [theme]);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      setToken(null);  // Clear token in context
+      setUser(null);   // Clear user in context
+
+      navigation.navigate("Login");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -47,6 +62,14 @@ const SettingsScreen = ({ navigation }) => {
               onValueChange={toggleTheme}
             />
           )}
+        />
+        <List.Item
+          title="Logout"
+          description="Log out of your account"
+          left={() => <List.Icon icon="logout" color={theme.text} />}
+          titleStyle={styles.itemText}
+          descriptionStyle={styles.itemDescription}
+          onPress={handleLogout}
         />
       </List.Section>
     </View>
