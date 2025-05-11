@@ -9,6 +9,10 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     profilePicture: { type: String, default: ''},
     date_created: { type: Date, default: Date.now },
+    conversations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Conversation'
+      }]
 });
 
 const User = mongoose.model('User', UserSchema);
