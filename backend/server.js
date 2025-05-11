@@ -7,15 +7,18 @@
 import express from 'express';
 import connectDB from './db.js';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
-import postRoutes from './routes/posts.js';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs'
-dotenv.config();
+import fs from 'fs';
+import { createServer } from 'http';
+import authRoutes from './routes/auth.js';
+import postRoutes from './routes/posts.js';
+import conversationRoutes from './routes/conversationRoutes.js';
+import setupSocket from './socket.js';
 
+dotenv.config();
 
 const app = express();
 
@@ -35,7 +38,6 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} = ${req.method} ${req.url}`);
     next();
 });
-//app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //serve static files from uploads directory
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +54,7 @@ if (!fs.existsSync(tempUploadsDir)) {
 //Define Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 //root route
 app.get('/', (req, res) => {
@@ -63,15 +66,21 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
         message: 'Something went wrong!',
-        //error: process.env.NODE_ENV === 'development' ? err.message : 'Server error'
     });
 });
 
+//create HTTP server for socket.io
+const server = createServer(app);
+
+//set up socket.IO
+const io = setupSocket(server);
+
+//define port
 const PORT = process.env.PORT || 19000;
-//console.log("Environment:", process.env.NODE_ENV);
-console.log("JWT Secret:", process.env.JWT_SECRET);
-//console.log("AWS S3 configured:", !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+//changed to server.listen to support socket.io
+server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+//app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 
 export default app;
 

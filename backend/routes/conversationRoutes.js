@@ -1,24 +1,27 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import fs from 'fs';
 import path from 'path';
 
 import Conversation from '../models/conversation.js';
 import Message from '../models/message.js';
 import User from '../models/user.js';
-import auth from '../middleware/auth.js';
+import auth from '../middleware.js';
 
 const router = express.Router();
 
-//configure AWS
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+// Configure AWS S3 client (AWS SDK v3)
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'us-east-1',
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
 });
 
-//configure multer for temp file storage
+// Configure multer for temp file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/');
@@ -31,7 +34,7 @@ const storage = multer.diskStorage({
 const upload = multer ({
     storage: storage,
     limits: {
-        fileSize: 1024 * 1024 * 5 //5MB
+        fileSize: 1024 * 1024 * 5 // 5MB
     },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
@@ -61,6 +64,7 @@ router.get('/conversations', auth, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 /**
  * @route POST /api/conversations
  * @desc Create a new conversation
@@ -70,27 +74,27 @@ router.post('/conversations', auth, async (req, res) => {
     try {
         const { participants, type, name } = req.body;
 
-        //validate participants
+        // Validate participants
         if (!participants || !Array.isArray(participants)) {
             return res.status(400).json({ message: 'Participants are required' });
         }
 
-        //Ensure current user is included in participants
+        // Ensure current user is included in participants
         if (!participants.includes(req.user.id)) {
             return res.status(400).json({ message: 'Current user must be a participant' });
         }
 
-        //For direct messages, only 2 participants are allowed
+        // For direct messages, only 2 participants are allowed
         if (type === 'direct' && participants.length !== 2) {
             return res.status(400).json({ message: 'Direct messages must have exactly 2 participants' });
         }
 
-        //For group chats, a name is required
+        // For group chats, a name is required
         if (type === 'group' && !name) {
             return res.status(400).json({ message: 'Group chats must have a name' });
         }
 
-        //check if a direct conversation already exists between these two users
+        // Check if a direct conversation already exists between these two users
         if (type === 'direct') {
             const existingConversation = await Conversation.findOne({
                 type: 'direct',
@@ -102,7 +106,7 @@ router.post('/conversations', auth, async (req, res) => {
             }
         }
 
-        //Create a new converation
+        // Create a new conversation
         const newConversation = new Conversation({
             participants,
             type,
@@ -111,13 +115,13 @@ router.post('/conversations', auth, async (req, res) => {
 
         const savedConversation = await newConversation.save();
 
-        //Add the conversation to all participants' user docuements
+        // Add the conversation to all participants' user documents
         await User.updateMany(
             { _id: { $in: participants } },
             { $push: { conversations: savedConversation._id } }
         );
 
-        //Populate participants
+        // Populate participants
         const populatedConversation = await Conversation.findById(savedConversation._id)
             .populate('participants', 'username firstname lastname');
 
@@ -142,7 +146,7 @@ router.get('/conversations/:id', auth, async (req, res) => {
                 return res.status(404).json({ message: 'Conversation not found' });
             }
 
-            //Check if the requesting user is a participant
+            // Check if the requesting user is a participant
             if (!conversation.participants.some(p => p._id.toString() === req.user.id)) {
                 return res.status(403).json({ message: 'Not authorized to access this conversation' });
             }
@@ -171,15 +175,15 @@ router.put('/conversations/:id', auth, async (req, res) => {
             return res.status(404).json({ message: 'Conversation not found' });
         }
     
-        //Check if the requesting user is a participant
+        // Check if the requesting user is a participant
         if (!conversation.participants.some(p => p.toString() === req.user.id)) {
             return res.status(403).json({ message: 'Not authorized to update this conversation' });
         }
     
-        //Update fields
+        // Update fields
         if (name) conversation.name = name;
         if (participants) {
-            //Ensure the current user remains in participants
+            // Ensure the current user remains in participants
             if (!participants.includes(req.user.id)) {
                 participants.push(req.user.id);
             }
@@ -189,9 +193,9 @@ router.put('/conversations/:id', auth, async (req, res) => {
         conversation.updatedAt = Date.now();
         const updatedConversation = await conversation.save();
     
-        //If participants were updated, update the users' conversation arrays
+        // If participants were updated, update the users' conversation arrays
         if (participants) {
-            //remove conversation from users no longer in the group
+            // Remove conversation from users no longer in the group
             await User.updateMany(
                 {
                     _id: { $nin: participants },
@@ -200,7 +204,7 @@ router.put('/conversations/:id', auth, async (req, res) => {
                 { $pull: { conversations: req.params.id } }
             );
     
-            //add conversation to new users
+            // Add conversation to new users
             await User.updateMany(
                 {
                     _id: { $in: participants },
@@ -236,23 +240,23 @@ router.delete('/conversations/:id', auth, async (req, res) => {
             return res.status(404).json({ message: 'Conversation not found' });
         }
 
-        //Check if the requesting user is a participant
+        // Check if the requesting user is a participant
         if (!conversation.participants.some(p => p.toString() === req.user.id)) {
             return res.status(403).json({ message: 'Not authorized to delete this conversation' });
         }
 
-        //For group chats maybe add logic to only allow deletion by admin
+        // For group chats maybe add logic to only allow deletion by admin
 
-        //Delete all messages in the conversation
-        await Message.deleteMany({ conversation: req.params.id });
+        // Delete all messages in the conversation
+        await Message.deleteMany({ conversationId: req.params.id });
 
-        //Remove the conversation from all participants' user documents
+        // Remove the conversation from all participants' user documents
         await User.updateMany(
             { conversations: req.params.id },
             { $pull: { conversations: req.params.id } }
         );
 
-        //Delete the conversation
+        // Delete the conversation
         await conversation.deleteOne();
 
         res.status(200).json({ message: 'Conversation deleted successfully' });
@@ -278,7 +282,7 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
             return res.status(404).json({ message: 'Conversation not found' });
         }
 
-        //Check if the requesting user is a participant
+        // Check if the requesting user is a participant
         if (!conversation.participants.some(p => p.toString() === req.user.id)) {
             return res.status(403).json({ message: 'Not authorized to access this conversation' });
         }
@@ -319,7 +323,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
             return res.status(404).json({ message: 'Conversation not found' });
         }
 
-        //Check if the requesting user is a participant
+        // Check if the requesting user is a participant
         if (!conversation.participants.some(p => p.toString() === req.user.id)) {
             return res.status(403).json({ message: 'Not authorized to send messages in this conversation' });
         }
@@ -333,7 +337,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
         const savedMessage = await newMessage.save();
 
-        //Update the conversation's last message and timestamp
+        // Update the conversation's last message and timestamp
         conversation.lastMessage = {
             sender: req.user._id,
             content,
@@ -342,7 +346,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
         conversation.updatedAt = savedMessage.timestamp;
         await conversation.save();
 
-        //populate the message with sender information
+        // Populate the message with sender information
         const populatedMessage = await Message.findById(savedMessage._id)
             .populate('sender', 'username firstname lastname');
 
@@ -367,35 +371,39 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-    //read the file
-    const fileContent = fs.readFileSync(req.file.path);
+        // Read the file
+        const fileContent = fs.readFileSync(req.file.path);
 
-    //Set up S3 upload parameters
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: `messages/${Date.now()}-${req.file.originalname}`,
-        Body: fileContent,
-        ContentType: req.file.mimetype,
-        ACL: 'public-read'
-    };
+        // Set up S3 upload parameters
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: `messages/${Date.now()}-${req.file.originalname}`,
+            Body: fileContent,
+            ContentType: req.file.mimetype,
+            ACL: 'public-read'
+        };
 
-    //Upload to S3
-    s3.upload(params, async (err, data) => {
-        //delete the temp file
-        fs.unlinkSync(req.file.path);
-
-        if (err) {
+        try {
+            // Upload to S3 using AWS SDK v3
+            const command = new PutObjectCommand(params);
+            const data = await s3Client.send(command);
+            
+            // Delete the temp file
+            fs.unlinkSync(req.file.path);
+            
+            // Construct the S3 URL
+            const s3Url = `https://${params.Bucket}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${params.Key}`;
+            
+            // Return the S3 URL
+            res.status(200).json({ url: s3Url });
+        } catch (err) {
             console.error('S3 upload error:', err);
             return res.status(500).json({ message: 'Failed to upload to S3' });
         }
-
-        //return the s3 url
-        res.status(200).json({ url: data.Location });
-    });
-} catch (err) {
-    console.error('Error uploading file:', err);
-    res.status(500).json({ message: 'Server error' });
-}
+    } catch (err) {
+        console.error('Error uploading file:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 /**
@@ -411,13 +419,13 @@ router.put('/messages/:id/read', auth, async (req, res) => {
             return res.status(404).json({ message: 'Message not found' });
         }
 
-        //Check if user is in the conversation
+        // Check if user is in the conversation
         const conversation = await Conversation.findById(message.conversationId);
-        if (!conversation.participants.some(p => p.toString() === req.userid)) {
+        if (!conversation.participants.some(p => p.toString() === req.user.id)) {
             return res.status(403).json({ message: 'Not authorized to access this message' });
         }
 
-        //add user to readBy if not already there
+        // Add user to readBy if not already there
         if (!message.readBy.includes(req.user.id)) {
             message.readBy.push(req.user.id);
             await message.save();
@@ -446,19 +454,19 @@ router.delete('/messages/:id', auth, async (req, res) => {
             return res.status(404).json({ message: 'Message not found' });
         }
 
-        //COnly the sender can delete their message
+        // Only the sender can delete their message
         if (message.sender.toString() !== req.user.id) {
             return res.status(403).json({ message: 'Not authorized to delete this message' });
         }
 
-        //if this is the last message in the conversation, update the conversation
+        // If this is the last message in the conversation, update the conversation
         const conversation = await Conversation.findById(message.conversationId);
         if (conversation.lastMessage && 
             conversation.lastMessage.sender.toString() === req.user.id &&
             new Date(conversation.lastMessage.timestamp).getTime() === new Date(message.timestamp).getTime()) {
 
-                //Find the new last message
-                const newLastMessage = await MessageChannel.findOne({
+                // Find the new last message
+                const newLastMessage = await Message.findOne({
                     conversationId: message.conversationId,
                     _id: { $ne: message._id }
                 }).sort({ timestamp: -1 });
@@ -476,9 +484,9 @@ router.delete('/messages/:id', auth, async (req, res) => {
             await conversation.save();
         }
 
-        //delete message
+        // Delete message
         if (message.media) {
-            //extract key from s3 url
+            // Extract key from S3 URL
             const key = message.media.split('/').slice(3).join('/');
 
             const params = {
@@ -486,10 +494,13 @@ router.delete('/messages/:id', auth, async (req, res) => {
                 Key: key
             };
 
-            //Delete from S3
-            s3.deleteObject(params, (err, data) => {
-                if (err) console.error('S3 delete error:', err);
-            });
+            try {
+                // Delete from S3 using AWS SDK v3
+                const command = new DeleteObjectCommand(params);
+                await s3Client.send(command);
+            } catch (err) {
+                console.error('S3 delete error:', err);
+            }
         }
 
         await message.deleteOne();
