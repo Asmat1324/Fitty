@@ -75,7 +75,7 @@ const MealScreen = () => {
         <Text style={styles.fetchButtonText}>Get {category} Meals</Text>
       </TouchableOpacity>
 
-      {loading && <ActivityIndicator size="large" color={theme.primary} />}
+      {loading && <ActivityIndicator size={40} color={theme.primary} />}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 

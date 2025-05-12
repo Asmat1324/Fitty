@@ -7,17 +7,16 @@ import { AuthContext } from '../utilities/authContext';
 
 const SettingsScreen = ({ navigation }) => {
   const { theme, toggleTheme, mode } = useTheme();
-  const { setToken, setUser } = useContext(AuthContext);
+  const { setToken, setUser, setIsAuthenticated, isAuthenticated } = useContext(AuthContext);
   const darkMode = mode === 'dark';
   const styles = useMemo(() => getStyles(theme), [theme]);
-
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token');
       setToken(null);  // Clear token in context
       setUser(null);   // Clear user in context
-
-      navigation.navigate("Login");
+      setIsAuthenticated(false);
+      console.log(isAuthenticated)
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -36,14 +35,14 @@ const SettingsScreen = ({ navigation }) => {
           descriptionStyle={styles.itemDescription}
           onPress={() => navigation.navigate('trackerScreen')}
         />
-        <List.Item
+        {/* <List.Item
           title="Notifications"
           description="Enable/disable notifications"
           left={() => <List.Icon icon="bell" color={theme.text} />}
           titleStyle={styles.itemText}
           descriptionStyle={styles.itemDescription}
           onPress={() => navigation.navigate('trackerScreen')}
-        />
+        /> */}
         <List.Item
           title="Privacy"
           description="Update your privacy preferences"

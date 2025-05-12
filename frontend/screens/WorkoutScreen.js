@@ -95,7 +95,7 @@ const WorkoutScreen = () => {
         <Text style={styles.buttonText}>Refresh Exercises</Text>
       </TouchableOpacity>
 
-      {loading && <ActivityIndicator size="large" color={theme.primary} />}
+      {loading && <ActivityIndicator size={40} color={theme.primary} />}
 
       {!loading && exerciseData.length > 0 && (
         <FlatList

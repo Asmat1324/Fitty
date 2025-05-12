@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useTheme} from './utilities/ThemeContext'
 // Screens
+
 import HomeScreen from './screens/HomeScreen';
 import ExerciseContainer from './screens/ExerciseContainer';
 import TrackerContainer from './screens/TrackerContainer';
@@ -12,12 +13,15 @@ import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import NotificationScreen from './screens/NotificationScreen'
+import { AuthContext } from './utilities/authContext';
+import ChatScreen from './screens/ChatScreen';
 // Screen Names
 const homeName = 'Fitty Stream';
 const trackerName = 'Diet';
 const notificationName = 'Social';
 const settingsName = 'Settings';
 const workoutName = 'Exercise';
+const chatName = 'Chat';
 // Create Navigators
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -29,6 +33,7 @@ const MainTabs = () => {
   <Tab.Navigator
     initialRouteName={homeName}
     screenOptions={({ route }) => ({
+      headerShown:false,
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
         let rn = route.name;
@@ -55,6 +60,8 @@ const MainTabs = () => {
         borderTopColor: 'transparent',
         backdropFilter: 'blur(10px)',
       },
+      headerTintColor: theme.background,
+     
     })}
   >
     <Tab.Screen name={homeName} component={HomeScreen} />
@@ -66,22 +73,20 @@ const MainTabs = () => {
 )};
 
 const MainContainer = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { setIsAuthenticated, isAuthenticated } = useContext(AuthContext);
   return (
-    <NavigationContainer options={{ headerShown: false }}>
+    <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <>
-          <Stack.Screen name="Login">
-            {(props) => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
-          </Stack.Screen>
-          <Stack.Screen name="Signup">
-              {props => <SignupScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
-            </Stack.Screen>
-          
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
           </>
         ) : (
-          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name={chatName} component={ChatScreen} />         
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

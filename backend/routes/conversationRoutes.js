@@ -50,94 +50,118 @@ const upload = multer ({
  * @desc Get all conversations for a user
  * @access Private
  */
-router.get('/conversations', auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
-        const conversations = await Conversation.find({
-            participants: req.user._id  
-        })
-        .populate('participants', 'username firstname lastname')
-        .sort({ updatedAt: -1 });
-
-        res.status(200).json(conversations);
+        const userId = req.user._id;
+      console.log('Fetching conversations for user:', userId);
+      console.log(req.body);
+      const conversations = await Conversation.find({
+        participants: userId
+      })
+      .populate('participants', 'username firstname lastname')
+      .sort({ updatedAt: -1 });
+  
+      console.log('Returning', conversations.length, 'conversations');
+      res.status(200).json(conversations);
     } catch (err) {
-        console.error('Error fetching conversations:', err);
-        res.status(500).json({ message: 'Server error' });
+      console.error('Error fetching conversations:', err);
+      res.status(500).json({ message: 'Server error' });
     }
-});
+  });
+  
 
 /**
  * @route POST /api/conversations
  * @desc Create a new conversation
  * @access Private
  */
-router.post('/conversations', auth, async (req, res) => {
+router.post('/', auth, async (req, res) => {
     try {
-        const { participants, type, name } = req.body;
-
-        // Validate participants
-        if (!participants || !Array.isArray(participants)) {
-            return res.status(400).json({ message: 'Participants are required' });
-        }
-
-        // Ensure current user is included in participants
-        if (!participants.includes(req.user.id)) {
-            return res.status(400).json({ message: 'Current user must be a participant' });
-        }
-
-        // For direct messages, only 2 participants are allowed
-        if (type === 'direct' && participants.length !== 2) {
-            return res.status(400).json({ message: 'Direct messages must have exactly 2 participants' });
-        }
-
-        // For group chats, a name is required
-        if (type === 'group' && !name) {
-            return res.status(400).json({ message: 'Group chats must have a name' });
-        }
-
-        // Check if a direct conversation already exists between these two users
-        if (type === 'direct') {
-            const existingConversation = await Conversation.findOne({
-                type: 'direct',
-                participants: { $all: participants, $size: 2 }
-            });
-
-            if (existingConversation) {
-                return res.status(200).json(existingConversation);
-            }
-        }
-
-        // Create a new conversation
-        const newConversation = new Conversation({
-            participants,
-            type,
-            name: type === 'group' ? name : null
+      let { participants, type, name } = req.body;
+  
+      if (!Array.isArray(participants)) {
+        return res.status(400).json({ message: 'Participants must be an array' });
+      }
+  
+      const currentUserId = req.user._id.toString();
+      if (!participants.includes(currentUserId)) {
+        participants.push(currentUserId);
+      }
+  
+      // 🔧 Convert all participant IDs to ObjectIds
+      const participantObjectIds = participants.map(id => mongoose.Types.ObjectId(id));
+  
+      if (type === 'direct' && participantObjectIds.length !== 2) {
+        return res.status(400).json({ message: 'Direct messages must have exactly 2 participants' });
+      }
+  
+      if (type === 'group' && !name) {
+        return res.status(400).json({ message: 'Group chats must have a name' });
+      }
+  
+      if (type === 'direct') {
+        const existing = await Conversation.findOne({
+          type: 'direct',
+          participants: { $all: participantObjectIds, $size: 2 }
         });
-
-        const savedConversation = await newConversation.save();
-
-        // Add the conversation to all participants' user documents
-        await User.updateMany(
-            { _id: { $in: participants } },
-            { $push: { conversations: savedConversation._id } }
-        );
-
-        // Populate participants
-        const populatedConversation = await Conversation.findById(savedConversation._id)
-            .populate('participants', 'username firstname lastname');
-
-            res.status(201).json(populatedConversation);
+  
+        if (existing) {
+          return res.status(200).json(existing);
+        }
+      }
+  
+      const validParticipants = await User.find({ _id: { $in: participantObjectIds } }).select('_id');
+      if (validParticipants.length !== participantObjectIds.length) {
+        return res.status(400).json({ message: 'Some participants are invalid users.' });
+      }
+  
+      const newConversation = new Conversation({
+        participants: participantObjectIds,
+        type,
+        name: type === 'group' ? name : null,
+      });
+  
+      const saved = await newConversation.save();
+  
+      await User.updateMany(
+        { _id: { $in: participantObjectIds } },
+        { $push: { conversations: saved._id } }
+      );
+  
+      const populated = await Conversation.findById(saved._id)
+        .populate('participants', 'username firstname lastname');
+  
+      console.log('Created conversation:', populated._id);
+      res.status(201).json(populated);
     } catch (err) {
-        console.error('Error creating conversation:', err);
+      console.error('Error creating conversation:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+/**
+ * @route GET /api/users
+ * @desc Get all users
+ * @access Private
+ */
+router.get('/users', auth, async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('username firstname lastname profilePicture')
+            .sort({ username: 1 });
+
+        res.status(200).json(users);
+    } catch (err) {
+        console.error('Error fetching users:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 /**
  * @route GET /api/conversations/:id
  * @desc Get a specific conversation
  * @access Private
  */
-router.get('/conversations/:id', auth, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
     try {
         const conversation = await Conversation.findById(req.params.id)
             .populate('participants', 'username firstname lastname');
@@ -166,7 +190,7 @@ router.get('/conversations/:id', auth, async (req, res) => {
  * @desc Update a conversation (for groups)
  * @access Private
  */
-router.put('/conversations/:id', auth, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     try {
         const { name, participants } = req.body;
         const conversation = await Conversation.findById(req.params.id);
@@ -232,7 +256,7 @@ router.put('/conversations/:id', auth, async (req, res) => {
  * @desc Delete a conversation
  * @access Private
  */
-router.delete('/conversations/:id', auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     try {
         const conversation = await Conversation.findById(req.params.id);
 
@@ -274,7 +298,7 @@ router.delete('/conversations/:id', auth, async (req, res) => {
  * @desc Get all messages in a conversation
  * @access Private
  */
-router.get('/conversations/:id/messages', auth, async (req, res) => {
+router.get('/:id/messages', auth, async (req, res) => {
     try {
         const conversation = await Conversation.findById(req.params.id);
 
@@ -312,7 +336,7 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
  * @desc Send a message in a conversation
  * @access Private
  */
-router.post('/conversations/:id/messages', auth, async (req, res) => {
+router.post('/:id/messages', auth, async (req, res) => {
     try {
         const { content } = req.body;
         const conversationId = req.params.id;
@@ -330,7 +354,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 
         const newMessage = new Message({
             conversationId,
-            sender: req.user._id,
+            sender: req.user.id,
             content,
             readBy: [req.user.id]
         });
@@ -515,22 +539,6 @@ router.delete('/messages/:id', auth, async (req, res) => {
     }
 });
 
-/**
- * @route GET /api/users
- * @desc Get all users
- * @access Private
- */
-router.get('/users', auth, async (req, res) => {
-    try {
-        const users = await User.find()
-            .select('username firstname lastname profilePicture')
-            .sort({ username: 1 });
 
-        res.status(200).json(users);
-    } catch (err) {
-        console.error('Error fetching users:', err);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
 
 export default router;

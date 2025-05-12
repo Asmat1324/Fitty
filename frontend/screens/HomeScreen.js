@@ -34,6 +34,8 @@ const HomeScreen = () => {
   const [uploading, setUploading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [imageVisible, setImageVisible] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState(null);
   const [newCaption, setNewCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -84,41 +86,40 @@ const HomeScreen = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${config.apiBaseUrl}/api/posts`);
+      const res = await axios.get(`${config.apiBaseUrl}/api/posts`);  // <-- This was missing
       const formattedPosts = await Promise.all(res.data.map(async post => {
         let imageUrl = '';
-
-        //Get signed URL for the image
+  
         try {
           const imgRes = await axios.get(`${config.apiBaseUrl}/api/auth/profile-picture/${post.imageUri}`);
           imageUrl = imgRes.data.url;
         } catch (err) {
           console.error("Error getting image URL:", err);
         }
-
+  
         const isLikedByUser = post.likes.some(like => like.user === user?._id);
-
-        const formattedPost = {
+  
+        return {
           id: post._id,
           username: post.userID.username || post.userID.firstname?.toLowerCase() || 'unknown',
-          imageUri: {uri: imageUrl},
+          imageUri: { uri: imageUrl },
           caption: post.caption,
           likes: post.likes.length,
           comments: post.comments ? post.comments.length : 0,
           liked: isLikedByUser,
-          userId: post.userID._id
+          userId: post.userID._id,
         };
-        return formattedPost;
       }));
-
+  
       setPosts(formattedPosts);
     } catch (err) {
       console.error("failed to fetch posts:", err.response?.data || err.message);
-      Alert.alert("Error", "Failed to load posts. Please try again.")
+      Alert.alert("Error", "Failed to load posts. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleUpload = () => setModalVisible(true);
 
@@ -320,7 +321,7 @@ const HomeScreen = () => {
         return (
           <View style={styles.commentItem}>
             <Text style={styles.commentUser}>{item.user?.username || 'Unknown'}:</Text>
-            <Text style={styles.commentText}>{item.text}</Text>
+            <Text style={styles.postCommentText}>{item.text}</Text>
             {item.date && <Text style={styles.commentTime}>{new Date(item.date).toLocaleTimeString()} - {new Date(item.date).toLocaleDateString()}</Text>}
 
             {canDeleteComment && (
@@ -336,7 +337,14 @@ const HomeScreen = () => {
     <Card style={styles.card}>
       <Card.Content>
         <Text style={styles.username}>{item.username}</Text>
+        <TouchableOpacity
+  onPress={() => {
+    setSelectedImageUri(item.imageUri);
+    setImageVisible(true);
+  }}
+>
         <Image source={item.imageUri} style={styles.image} />
+        </TouchableOpacity>
         <Paragraph style={styles.caption}>{item.caption}</Paragraph>
       </Card.Content>
       <Card.Actions style={styles.actions}>
@@ -363,7 +371,7 @@ const HomeScreen = () => {
   if (loading) {
     return (
       <View style={[styles.constainer, styles.centered]}>
-        <ActivityIndicator size ="large" color = "#48E0E4" />
+        <ActivityIndicator size={40}  color = "#48E0E4" />
       </View>
     );
   }
@@ -421,7 +429,7 @@ const HomeScreen = () => {
               value={newCaption}
               onChangeText={setNewCaption}
             />
-
+              
             <View style={styles.modalButtons}>
               <TouchableOpacity 
               onPress={handlePostSubmit} 
@@ -431,7 +439,7 @@ const HomeScreen = () => {
               disabled={uploading}
               >
                 {uploading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size={20} color="#fff" />
                 ) : (
                   <Text style={styles.modalButtonText}>Post</Text>
                 )}
@@ -487,6 +495,24 @@ const HomeScreen = () => {
           </View>
     </View>
     </Modal>
+    <Modal
+        visible={imageVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImageVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalContainer}
+          onPress={() => setImageVisible(false)}
+          activeOpacity={1}
+        >
+          <Image
+            source={selectedImageUri}
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -610,6 +636,12 @@ export const getStyles = (theme) =>
       backgroundColor: 'rgba(0,0,0,0.5)',
       padding: 10,
     },
+   
+    fullImage: {
+      width: '90%',
+      height: '90%',
+    },
+  
  modalContent: {
       width: '90%',
       backgroundColor: theme.card,
@@ -715,10 +747,12 @@ export const getStyles = (theme) =>
       marginVertical: 10,
     },
     commentsList: {
+      color: theme.text,
       maxHeight: 200,
       marginBottom: 10,
     },
     commentInput: {
+      color: theme.text,
       borderWidth: 1,
       borderColor: '#ccc',
       borderRadius: 5,
@@ -733,8 +767,9 @@ export const getStyles = (theme) =>
       marginTop: 10,
     },
     postCommentText: {
-      color: '#fff',
+      color: theme.text,
       fontWeight: 'bold',
+      
     },
     closeButton: {
       alignItems: 'center',
@@ -745,11 +780,13 @@ export const getStyles = (theme) =>
     },
     commentUser: {
       fontWeight: 'bold',
+      color: theme.text,
     },
     commentTime: {
       fontSize: 10,
-      color: '#666',
+   
       marginLeft: 4,
+      color: theme.text,
     },
     deleteBtn: {
       marginLeft: 16,

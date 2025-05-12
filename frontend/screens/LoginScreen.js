@@ -1,16 +1,16 @@
-import React, { useState, useContext, useMemo} from 'react';
+import React, { useState, useContext, useMemo, useEffect} from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
 import { AuthContext } from '../utilities/authContext';
 import {useTheme} from '../utilities/ThemeContext'
 
-export default function LoginScreen({ navigation, setIsAuthenticated }) {
+export default function LoginScreen({ navigation}) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   //const [formData, setFormData] = useState({ email: "", password: "" });
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const {setUser, setToken } = useContext(AuthContext);
+  const {setUser, token, setToken, isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const {theme} = useTheme();
   const styles = useMemo(() => getStyles(theme), [theme]);
   
@@ -18,6 +18,15 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
     setFormData({...formData, [name]: value});
   }
     */
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      });
+    }
+  }, [isAuthenticated]);
+  
   const handleLogin = async (e) => {
       e.preventDefault();
       setErrorMessage("");
@@ -30,7 +39,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
         password: password,
         ...(isEmail ? { email: loginIdentifier } : {username: loginIdentifier })
       };
-      
+      console.log(token)
    try{
     const apiUrl = `${config.apiBaseUrl}/api/auth/login`; // imported variable from config.js
     const response = await fetch(apiUrl, {
@@ -92,7 +101,7 @@ export default function LoginScreen({ navigation, setIsAuthenticated }) {
           <Text style={styles.buttonText}>LOG IN</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Sign up')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
           <Text style={styles.buttonText}>SIGN UP</Text>
         </TouchableOpacity>
       </View>

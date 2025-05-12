@@ -1,25 +1,33 @@
-//backend/middleware.js
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-//import express from 'express';
+import User from './models/user.js'; 
+
 dotenv.config();
 
-export default function (req, res, next) {
-    //get token from authorization header
-    const token = req.header('x-auth-token');
+export default async function (req, res, next) {
+  let token = req.header('x-auth-token');
 
-    //check if token exists and starts with 'Bearer '
-    if (!token) {
-        return res.status(401).json({ msg: 'No token, authorization denied' });
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({ msg: 'No token, authorization denied' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.user.id).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({ msg: 'User not found' });
     }
 
-    try{
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
 
-        //add user from payload to request
-        req.user = decoded.user;
-        next();
-    } catch (err) {
-        res.status(401).json({ msg: 'Token is not valid' });
-    }
+    next();
+  } catch (err) {
+    console.error('JWT error:', err);
+    res.status(401).json({ msg: 'Token is not valid' });
+  }
 }
