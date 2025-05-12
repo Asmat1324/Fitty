@@ -196,6 +196,7 @@ const getStyles = (theme) => StyleSheet.create({
     color: theme.text,
     fontWeight: 'bold',
     marginBottom: 20,
+    alignSelf: 'center',
   },
   highlight: {
     color: '#48E0E4',

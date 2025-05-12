@@ -24,7 +24,7 @@ const SettingsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings Screen</Text>
+      <Text style={styles.title}>Settings</Text>
 
       <List.Section>
         <List.Item
@@ -43,14 +43,14 @@ const SettingsScreen = ({ navigation }) => {
           descriptionStyle={styles.itemDescription}
           onPress={() => navigation.navigate('trackerScreen')}
         /> */}
-        <List.Item
+        {/* <List.Item
           title="Privacy"
           description="Update your privacy preferences"
           left={() => <List.Icon icon="lock" color={theme.text} />}
           titleStyle={styles.itemText}
           descriptionStyle={styles.itemDescription}
           onPress={() => navigation.navigate('PrivacyScreen')}
-        />
+        /> */}
         <List.Item
           title="Dark Mode"
           left={() => <List.Icon icon="theme-light-dark" color={theme.text} />}
